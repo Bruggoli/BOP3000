@@ -1,5 +1,7 @@
 import express, {Express, Request, Response} from "express";
 import dotenv from "dotenv";
+import { klubberRouter } from "./routes/users";
+import connectToDb from "./services/conn";
 
 dotenv.config();
 
@@ -7,11 +9,18 @@ dotenv.config();
 const app: Express = express();
 const port = process.env.PORT || 3000;
 
-app.get('/', (req: Request, res: Response) => {
-    console.log('[GET ROUTE]');
-    res.send('Hei hallo lmao');
+connectToDb()
+    .then(() => {
+        app.use("/klubber", klubberRouter);
 
-});
+        app.listen(port, () => {
+            console.log(`Server started at httl://localhost:${port}`)        
+        });
+    })
+    .catch((error: Error) => {
+        console.error("Database connection failed", error);
+        process.exit();
+    });
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);
