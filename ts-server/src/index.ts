@@ -12,10 +12,7 @@ const port = process.env.PORT || 3000;
 connectToDb()
     .then(() => {
         app.use("/klubber", klubberRouter);
-
-        app.listen(port, () => {
-            console.log(`Server started at httl://localhost:${port}`)        
-        });
+        console.log("connected to db")
     })
     .catch((error: Error) => {
         console.error("Database connection failed", error);

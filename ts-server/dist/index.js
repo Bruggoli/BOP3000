@@ -14,9 +14,7 @@ const port = process.env.PORT || 3000;
 (0, conn_1.default)()
     .then(() => {
     app.use("/klubber", users_1.klubberRouter);
-    app.listen(port, () => {
-        console.log(`Server started at httl://localhost:${port}`);
-    });
+    console.log("connected to db");
 })
     .catch((error) => {
     console.error("Database connection failed", error);
