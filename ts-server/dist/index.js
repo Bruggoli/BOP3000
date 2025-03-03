@@ -5,11 +5,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const users_1 = require("./routes/users");
+const conn_1 = __importDefault(require("./services/conn"));
 dotenv_1.default.config();
+// KJØR SERVER MED "node run dev"
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
-app.get('/', (req, res) => {
-    res.send('Our server!');
+(0, conn_1.default)()
+    .then(() => {
+    app.use("/klubber", users_1.klubberRouter);
+    app.listen(port, () => {
+        console.log(`Server started at httl://localhost:${port}`);
+    });
+})
+    .catch((error) => {
+    console.error("Database connection failed", error);
+    process.exit();
 });
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);
