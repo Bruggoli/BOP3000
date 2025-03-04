@@ -1,3 +1,4 @@
+import styles from "../../global.css";
 import React from 'react';
 import { View, Text } from 'react-native';
 
@@ -6,14 +7,13 @@ type PostProps = {
     user: string;
     text: string;
     location?: string;
-    color: string;
 };
 
-const PostCard: React.FC<PostProps> = ({ user, text, location, color }) => (
-    <View className={`p-4 m-2 rounded-lg ${color}`}>
-        <Text className="text-white font-bold">{user}</Text>
-        <Text className="text-white">{text}</Text>
-            {location && <Text className="text-white text-xs mt-2">📍 {location}</Text>}
+const PostCard: React.FC<PostProps> = ({ user, text, location }) => (
+    <View>
+        <Text style={{ color: 'red' }}>{user}</Text>
+        <Text className="!text-purple-600" style={{ color: 'green' }}>{text}</Text>
+            {location && <Text>📍 {location}</Text>}
     </View>
 );
 

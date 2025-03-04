@@ -1,3 +1,4 @@
+import "../../global.css";
 import React from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import PostCard from '@/components/ui/PostCard';
@@ -17,8 +18,8 @@ export default function ProfileScreen() {
                 </Pressable>
             </View>
             <Text className="text-white mt-4">Posts:</Text>
-            <PostCard user="SneakyTurtle23" text="Trenger +1 på Fortnite" location="Grivi" color="bg-green-500" />
-            <PostCard user="SneakyTurtle23" text="Når er er oblig 2 frist i prog??" location="" color="bg-yellow-500" />
+            <PostCard user="SneakyTurtle23" text="Trenger +1 på Fortnite" location="Grivi" />
+            <PostCard user="SneakyTurtle23" text="Når er er oblig 2 frist i prog??" location="" />
         </View>
     );
 }
