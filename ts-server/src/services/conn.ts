@@ -1,20 +1,29 @@
-// External dependencies
 import { MongoClient, Db, Collection } from "mongodb";
-import * as dotenv from "dotenv";
-// Global variables
+import dotenv from "dotenv";
 
-export const collections: {klubb?: Collection} = {};
+dotenv.config();
 
-// Initialize connection
-async function connectToDb () {
-    const connectionString = process.env.ATLAS_URI || "";
-    const client: MongoClient = new MongoClient(connectionString);
-    await client.connect();
+const mongoURI = process.env.MONGO_URI || "mongodb+srv://dbAdmin:12345@cluster0.1e71y.mongodb.net/";
+const client = new MongoClient(mongoURI);
 
-    const db: Db = client.db("StudentLink");
-    const collection: Collection = db.collection("Klubber");
+export const collections: { klubber?: Collection; profiler?: Collection; poster?: Collection; kommentarer?: Collection } = {};
 
-    collections.klubb = collection;
-}
+export const connectToDb = async () => {
+    try {
+        await client.connect();
+        console.log("MongoDB tilkoblet!");
+
+        const db: Db = client.db("StudentLink"); // ADRIAN! sjekk om det er riktig database
+        collections.klubber = db.collection("Klubber");
+        collections.profiler = db.collection("Profil");
+        collections.poster = db.collection("Post");
+        collections.kommentarer = db.collection("Kommentar");
+
+        console.log("Collection er satt opp!");
+    } catch (error) {
+        console.error("Database connection failed:", error);
+        process.exit(1);
+    }
+};
+
 export default connectToDb;
-
