@@ -8,7 +8,7 @@ export const klubberRouter = express.Router();
 klubberRouter.get("/", async (_req: Request, res: Response) => {
     try {
         if (!collections.klubber) {
-            return res.status(500).send("❌ Database collection not initialized");
+            return res.status(500).send("Database collection not initialized");
         }
 
         const klubber = await collections.klubber.find({}).toArray();
