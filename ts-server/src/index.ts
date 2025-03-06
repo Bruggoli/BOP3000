@@ -19,9 +19,9 @@ connectToDb()
 
         // Registrer routes
         app.use("/klubber", klubberRouter);
-        app.use("/profiler", profilRouter);
-        app.use("/poster", postRouter);
-        app.use("/kommentarer", kommentarRouter);
+        app.use("/profil", profilRouter);
+        app.use("/post", postRouter);
+        app.use("/kommentar", kommentarRouter);
 
         app.listen(port, () => {
             console.log(`Server kjører på http://localhost:${port}`);
@@ -82,7 +82,7 @@ curl http://localhost:3000/kommentarer/post/653a0c9d8f1234567890abcd
 
 
 For å stenge serveren og ctrl + c ikke funker skriv følgende.
-netstat - ano | findstr: 3000 (finner hvor port 3000)
+netstat -ano | findstr :3000 (finner hvor port 3000)
 taskkill /PID <PID> /F (slkriv det siste 5 tallene som kommer opp når du skrivver kommandoen over.
 fjern "<>")
 

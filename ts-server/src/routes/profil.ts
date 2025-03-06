@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import Profil from "../models/profil";
+import Profil from "../models/Profil";
 
 export const profilRouter = express.Router();
 
