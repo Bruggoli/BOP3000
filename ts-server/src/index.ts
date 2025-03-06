@@ -79,4 +79,11 @@ curl http://localhost:3000/klubber/profiler/poster
 for å finne kommentar så trenger du mer spesifik informasjon
 curl http://localhost:3000/kommentarer/post/653a0c9d8f1234567890abcd
 (skriv in postid på slutten)
+
+
+For å stenge serveren og ctrl + c ikke funker skriv følgende.
+netstat - ano | findstr: 3000 (finner hvor port 3000)
+taskkill /PID <PID> /F (slkriv det siste 5 tallene som kommer opp når du skrivver kommandoen over.
+fjern "<>")
+
  */
