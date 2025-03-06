@@ -9,7 +9,7 @@ export const kommentarRouter = express.Router();
 // @ts-ignore
 kommentarRouter.post("/", async (req: Request, res: Response) => {
     try {
-        if (!collections.kommentarer) {
+        if (!collections.kommentar) {
             return res.status(500).send("Database collection not initialized");
         }
 
@@ -20,7 +20,7 @@ kommentarRouter.post("/", async (req: Request, res: Response) => {
             opprettet: new Date(),
         };
 
-        const resultat = await collections.kommentarer.insertOne(nyKommentar);
+        const resultat = await collections.kommentar.insertOne(nyKommentar);
 
         res.status(201).json({ message: "Kommentar opprettet!", id: resultat.insertedId });
     } catch (error: any) {
@@ -32,12 +32,12 @@ kommentarRouter.post("/", async (req: Request, res: Response) => {
 // @ts-ignore
 kommentarRouter.get("/post/:postId", async (req: Request, res: Response) => {
     try {
-        if (!collections.kommentarer) {
+        if (!collections.kommentar) {
             return res.status(500).send("Database collection not initialized");
         }
 
         const postId = new ObjectId(req.params.postId);
-        const kommentarer = await collections.kommentarer.find({ postId }).toArray();
+        const kommentarer = await collections.kommentar.find({ postId }).toArray();
 
         res.status(200).json(kommentarer);
     } catch (error: any) {
@@ -49,11 +49,11 @@ kommentarRouter.get("/post/:postId", async (req: Request, res: Response) => {
 // @ts-ignore
 kommentarRouter.get("/:id", async (req: Request, res: Response) => {
     try {
-        if (!collections.kommentarer) {
+        if (!collections.kommentar) {
             return res.status(500).send("Database collection not initialized");
         }
 
-        const kommentar = await collections.kommentarer.findOne({ _id: new ObjectId(req.params.id) });
+        const kommentar = await collections.kommentar.findOne({ _id: new ObjectId(req.params.id) });
 
         if (kommentar) {
             res.status(200).json(kommentar);
