@@ -15,7 +15,7 @@ app.use(express.json());
 
 connectToDb()
     .then(() => {
-        console.log("✅ Tilkoblet til MongoDB!");
+        console.log("Tilkoblet til MongoDB!");
 
         // Registrer routes
         app.use("/klubber", klubberRouter);

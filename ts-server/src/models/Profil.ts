@@ -7,5 +7,5 @@ export default interface Profil {
     email: string;
     passord: string; // Må hashes før lagring
     icon?: string;
-    medlemskap?: { klubbId: ObjectId; rolle: string }[]; // Liste over klubber brukeren er med i
+    medlemskap?: { klubbId: ObjectId; rolle: "Admin" | "Moderator" | "Medlem" }[]; // Liste over klubber brukeren er med i
 }

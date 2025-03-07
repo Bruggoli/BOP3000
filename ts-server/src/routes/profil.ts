@@ -42,17 +42,22 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
 profilRouter.get("/:id", async (req: Request, res: Response) => {
     try {
         if (!collections.profiler) {
-            return res.status(500).send("Database collection not initialized");
+            return res.status(500).send("Database collection ikke tilgjengelig");
         }
 
-        const profil = await collections.profiler.findOne({ _id: new ObjectId(req.params.id) });
+        const id = new ObjectId(req.params.id);
+        const profil = await collections.profiler.findOne({ _id: id });
 
-        if (profil) {
-            res.status(200).json(profil);
-        } else {
-            res.status(404).send("Profil ikke funnet");
+        if (!profil) {
+            return res.status(404).send("Profil ikke funnet");
         }
+
+        res.status(200).json(profil);
     } catch (error) {
-        res.status(400).send("Ugyldig ID-format");
+        if (error instanceof Error) {
+            res.status(400).send("Ugyldig ID-format");
+        } else {
+            res.status(500).send("Ukjent feil");
+        }
     }
 });
