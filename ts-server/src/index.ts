@@ -1,4 +1,4 @@
-import express, { Express } from "express";
+import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { klubberRouter } from "./routes/klubber";
 import { profilRouter } from "./routes/profil";
@@ -18,9 +18,10 @@ connectToDb()
         console.log("✅ Tilkoblet til MongoDB!");
 
         // Registrer routes
-        app.use("/klubber", klubberRouter);
+        app.use("/klubb", klubberRouter);
         app.use("/profil", profilRouter);
-        app.use("/post", postRouter);
+        app.use("/", postRouter);
+        // fjern denne etterhvert, trenger ikke egen route for kommentarer siden de skal lastes inn automatisk etter dev
         app.use("/kommentar", kommentarRouter);
 
         app.listen(port, () => {
@@ -87,3 +88,11 @@ taskkill /PID <PID> /F (slkriv det siste 5 tallene som kommer opp når du skrivv
 fjern "<>")
 
  */
+
+app.get("/status", (req: Request, res: Response) => {
+    const status = {
+        "Status": "Running",
+    };
+
+    res.send(status);
+});
