@@ -1,6 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import PostCard from '@/components/ui/PostCard';
+import { Button } from 'react-native';
+require('dotenv').config();
 
 const posts = [
     {
@@ -26,12 +28,19 @@ const posts = [
     },
 ];
 
+async function hentPosts() {
+  const res = await fetch(process.env.LOCALHOST + `/klubb`);
+  const data = await res.json();
+  console.log("data fetched" + data.navn);
+}
+
 export default function HomeScreen() {
     return (
         <View className="flex-1 bg-black p-4">
             {posts.map((post) => (
                 <PostCard key={post.id} {...post} />
             ))}
+            <Button title={"Hent"} onPress={() => hentPosts()}/>
         </View>
     );
 }
