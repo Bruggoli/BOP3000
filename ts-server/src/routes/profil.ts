@@ -1,0 +1,58 @@
+import express, { Request, Response } from "express";
+import { ObjectId } from "mongodb";
+import { collections } from "../services/conn";
+import Profil from "../models/Profil";
+
+export const profilRouter = express.Router();
+
+// Opprett en ny profil
+// @ts-ignore
+profilRouter.post("/", async (req: Request, res: Response) => {
+    try {
+        if (!collections.profiler) {
+            return res.status(500).send("Database collection not initialized");
+        }
+
+        const nyProfil: Profil = req.body;
+        const resultat = await collections.profiler.insertOne(nyProfil);
+
+        res.status(201).json({ message: "Profil opprettet!", id: resultat.insertedId });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Hent alle profiler
+// @ts-ignore
+profilRouter.get("/", async (_req: Request, res: Response) => {
+    try {
+        if (!collections.profiler) {
+            return res.status(500).send("Database collection not initialized");
+        }
+
+        const profiler = await collections.profiler.find({}).toArray();
+        res.status(200).json(profiler);
+    } catch (error: any) {
+        res.status(500).send(error.message);
+    }
+});
+
+// Hent en spesifikk profil basert på ID
+// @ts-ignore
+profilRouter.get("/:id", async (req: Request, res: Response) => {
+    try {
+        if (!collections.profiler) {
+            return res.status(500).send("Database collection not initialized");
+        }
+
+        const profil = await collections.profiler.findOne({ _id: new ObjectId(req.params.id) });
+
+        if (profil) {
+            res.status(200).json(profil);
+        } else {
+            res.status(404).send("Profil ikke funnet");
+        }
+    } catch (error) {
+        res.status(400).send("Ugyldig ID-format");
+    }
+});

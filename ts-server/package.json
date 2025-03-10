@@ -3,24 +3,34 @@
   "version": "1.0.0",
   "description": "Bachelor :D",
   "main": "src/index.js",
+  "type": "commonjs",
   "scripts": {
-    "build": "npx tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon -r tsconfig-paths/register src/index.ts"
+    "dev": "nodemon -r tsconfig-paths/register src/index.ts",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.4.7",
+    "expo": "^52.0.37",
     "express": "^4.21.2",
-    "mongoose": "^8.10.0",
+    "mongodb": "^6.13.1",
+    "mongoose": "^8.11.0",
+    "react": "18.3.1",
+    "react-native": "0.76.7",
     "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/node": "^22.13.1",
+    "@types/node": "^22.13.9",
+    "@types/react": "^18.2.6",
     "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
   }
 }
