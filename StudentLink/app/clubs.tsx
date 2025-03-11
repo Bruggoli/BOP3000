@@ -4,13 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // import axios from 'axios'; // Kommentar ut til senere
 import ClubItem from '@/components/ClubItem';
 import BottomMenu from "@/components/Navigation/BottomMenu";
+import Navbar from "@/components/Navigation/Navbar";
 
 export default function ClubsScreen() {
     const [clubs, setClubs] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // 🚀 Bruk testdata inntil databasen er koblet til
+        // 🚀 Bruker testdata inntil databasen er koblet til
         const mockClubs = [
             {
                 _id: '67b32fb08403dc0a510e500d',
@@ -47,20 +48,22 @@ export default function ClubsScreen() {
         */
     }, []);
 
-    // @ts-ignore
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Klubber</Text>
+            <Navbar location="Klubber" toggleTheme={() => {}} />
 
-            {loading ? (
-                <ActivityIndicator size="large" color="white" />
-            ) : (
-                <FlatList
-                    data={clubs}
-                    keyExtractor={(item) => item._id}
-                    renderItem={({ item }) => <ClubItem club={item} />}
-                />
-            )}
+            <View style={styles.clubBox}>
+                {loading ? (
+                    <ActivityIndicator size="large" color="white" />
+                ) : (
+                    <FlatList
+                        data={clubs}
+                        keyExtractor={(item) => item._id}
+                        renderItem={({ item }) => <ClubItem club={item} />}
+                    />
+                )}
+            </View>
+
             <BottomMenu />
         </SafeAreaView>
     );
@@ -72,11 +75,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#121212',
         padding: 20,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 15,
-        textAlign: 'center',
+    clubBox: {
+        backgroundColor: '#222', // Bakgrunnsfarge for boksen
+        borderRadius: 12, // Runde hjørner
+        padding: 15,
+        marginTop: 20, // 🚀 Senker boksene litt ned fra Navbar
+        shadowColor: '#000', // Skygge for effekt
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5, // Skygge på Android
     },
 });
