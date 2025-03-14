@@ -35,7 +35,7 @@ connectToDb()
 /*
 for å kjøre databasen skriv:
 "cd ts-server" for å navigere til riktig mappe
-"npx ts-node scr/index.ts" for å starte serveren
+"npx ts-node scr/index.tsx" for å starte serveren
 
 For å sette inn en klubb:
 curl -X POST http://localhost:3000/klubber -H "Content-Type: application/json" -d '{
