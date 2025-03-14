@@ -1,31 +1,35 @@
-import { Tabs } from 'expo-router';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useColorScheme } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import BottomMenu from '@/components/Navigation/BottomMenu';
 
-export default function TabLayout() {
+export default function RootLayout() {
+    const systemColorScheme = useColorScheme();
+    const isDark = systemColorScheme === 'dark';
+
     return (
-        <Tabs screenOptions={{ headerShown: false }}>
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: 'Home',
-                    tabBarIcon: ({ color }) => <IconSymbol size={24} name="house.fill" color={color} />,
-                }}
-            />
-            <Tabs.Screen
-                name="menu"
-                options={{
-                    title: 'Menu',
-                    tabBarIcon: ({ color }) => <IconSymbol size={24} name="gear" color={color} />,
-                }}
-            />
-            <Tabs.Screen
-                name="profile"
-                options={{
-                    title: 'Profile',
-                    tabBarIcon: ({ color }) => <IconSymbol size={24} name="person.fill" color={color} />,
-                }}
-            />
-        </Tabs>
+        <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+            <View style={styles.container}>
+                <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="profile" />
+                    <Stack.Screen name="clubs" />
+                    <Stack.Screen name="settings" />
+                    <Stack.Screen name="terms-of-service" />
+                    <Stack.Screen name="logout" />
+                    <Stack.Screen name="login" />
+                    <Stack.Screen name="register" />
+                </Stack>
+                {/* 🚀 Sørger for at BottomMenu alltid vises */}
+                <BottomMenu />
+            </View>
+        </ThemeProvider>
     );
 }
 
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+});
