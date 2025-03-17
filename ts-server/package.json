@@ -2,8 +2,8 @@
   "name": "ts-server",
   "version": "1.0.0",
   "description": "Bachelor :D",
-  "main": "index.js",
-  "type": "module",
+  "main": "src/index.js",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
