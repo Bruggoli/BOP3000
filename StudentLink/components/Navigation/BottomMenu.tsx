@@ -13,11 +13,15 @@ export default function BottomMenu() {
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.menuContainer}>
                 <TouchableOpacity style={styles.button} onPress={() => router.push('/')}>
-                    <Ionicons name="flame-outline" size={28} color="white" />
+                    <Ionicons name="flame-outline" size={40} color="white" />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.createButton} onPress={() => router.push('/create-post')}>
                     <Ionicons name="add-circle" size={40} color="white" />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.createButton} onPress={() => router.push('/profile')}>
+                    <Ionicons name="person-outline" size={40} color="white" />
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
