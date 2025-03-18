@@ -6,13 +6,16 @@ import { postRouter } from "./routes/post";
 import { kommentarRouter } from "./routes/kommentar";
 import connectToDb from "./services/conn";
 
+// Last inn miljøvariabler fra .env
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
+// Middleware for JSON-parsing
 app.use(express.json());
 
+// Koble til databasen og starte serveren
 connectToDb()
     .then(() => {
         console.log("Tilkoblet til MongoDB!");
@@ -21,17 +24,30 @@ connectToDb()
         app.use("/klubb", klubberRouter);
         app.use("/profil", profilRouter);
         app.use("/", postRouter);
-        // fjern denne etterhvert, trenger ikke egen route for kommentarer siden de skal lastes inn automatisk etter dev
+        // Kommentarer lastes inn via poster, men beholdes midlertidig
         app.use("/kommentar", kommentarRouter);
 
+        // Hovedendepunkt
+        app.get("/", (req: Request, res: Response) => {
+            res.send("🚀 API is running...");
+        });
+
         app.listen(port, () => {
-            console.log(`Server kjører på http://localhost:${port}`);
+            console.log(`🚀 Server kjører på http://localhost:${port}`);
         });
     })
     .catch((error: Error) => {
         console.error("Database connection failed", error);
         process.exit(1);
     });
+
+app.get("/status", (req: Request, res: Response) => {
+    const status = {
+        "Status": "Running",
+    };
+
+    res.send(status);
+});
 
 /*
 for å kjøre databasen skriv:
@@ -88,11 +104,3 @@ taskkill /PID <PID> /F (slkriv det siste 5 tallene som kommer opp når du skrivv
 fjern "<>")
 
  */
-
-app.get("/status", (req: Request, res: Response) => {
-    const status = {
-        "Status": "Running",
-    };
-
-    res.send(status);
-});
