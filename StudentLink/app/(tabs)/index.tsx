@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FlatList, StyleSheet, View, Modal, TouchableOpacity, Text, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Post from '@/components/Posts/Post';
 import BottomMenu from '@/components/Navigation/BottomMenu';
+import { LocationComp } from '@/components/LocationComp';
 import { Ionicons } from '@expo/vector-icons';
 
 const posts = [
@@ -22,7 +23,10 @@ export default function HomeScreen() {
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
     const [menuVisible, setMenuVisible] = useState(false);
+    // @ts-ignore
+    //const {location, errorMsg} = LocationComp();
     const router = useRouter();
+
 
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);
@@ -41,6 +45,11 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={[styles.safeContainer, { backgroundColor: isDarkMode ? '#121212' : '#fff' }]}>
+
+            <View style={styles.container}>
+                <Text style={styles.paragraph}>hei!</Text>
+            </View>
+
 
             {/* Navbar */}
             <View style={styles.navbar}>
@@ -152,5 +161,15 @@ const styles = StyleSheet.create({
     },
     list: {
         paddingBottom: 80, // 🔹 Viktig! Plass til BottomMenu så siste innlegg ikke skjules
+    },
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    paragraph: {
+        fontSize: 18,
+        textAlign: 'center',
     },
 });
