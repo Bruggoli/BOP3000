@@ -1,51 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import axios from 'axios'; // Kommentar ut til senere
 import ClubItem from '@/components/ClubItem';
 import BottomMenu from "@/components/Navigation/BottomMenu";
 import Navbar from "@/components/Navigation/Navbar";
 
+// type for klubbene
+interface Klubb {
+    _id: string;
+    navn: string;
+    beskrivelse: string;
+    admin: string;
+    medlemmer: string[];
+    createdAt: string;
+}
+
 export default function ClubsScreen() {
-    const [clubs, setClubs] = useState([]);
+    const [clubs, setClubs] = useState<Klubb[]>([]); // 🔹 Bruker typen Klubb[]
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // 🚀 Bruker testdata inntil databasen er koblet til
-        const mockClubs = [
-            {
-                _id: '67b32fb08403dc0a510e500d',
-                navn: 'Bokklubben',
-                beskrivelse: 'En klubb for bokelskere',
-                admin: 'studentnummer*',
-                medlemmer: ['user1'],
-                createdAt: '2024-03-05T12:00:00.000Z',
-            },
-            {
-                _id: '67b32fb08403dc0a510e501e',
-                navn: 'Fotballklubben',
-                beskrivelse: 'For fotballinteresserte',
-                admin: 'studentnummer2',
-                medlemmer: [],
-                createdAt: '2024-03-06T14:30:00.000Z',
-            },
-        ];
-        setClubs(mockClubs);
-        setLoading(false);
-
-        /* 🚀 Avkommenter dette når databasen er klar
         const fetchClubs = async () => {
             try {
-                const response = await axios.get('https://your-api-url.com/clubs');
-                setClubs(response.data);
+                const response = await fetch('http://localhost:3000/klubb'); // Henter fra backend
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data: Klubb[] = await response.json();
+                setClubs(data);
             } catch (error) {
                 console.error('Feil ved henting av klubber:', error);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchClubs();
-        */
     }, []);
 
     return (
@@ -58,7 +48,7 @@ export default function ClubsScreen() {
                 ) : (
                     <FlatList
                         data={clubs}
-                        keyExtractor={(item) => item._id}
+                        keyExtractor={(item) => item._id} // 🎯 Nå vet TypeScript at _id eksisterer
                         renderItem={({ item }) => <ClubItem club={item} />}
                     />
                 )}
@@ -87,3 +77,5 @@ const styles = StyleSheet.create({
         elevation: 5, // Skygge på Android
     },
 });
+
+
