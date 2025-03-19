@@ -9,11 +9,13 @@ export function LocationComp() {
         async function getCurrentLocation() {
 
             // @ts-ignore
-            let { status } = "granted";
+            let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 setErrorMsg('Permission to access location was denied');
                 return;
             }
+
+            console.warn(status.toString())
 
             let location = await Location.getCurrentPositionAsync({});
             setLocation(location);

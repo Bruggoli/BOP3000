@@ -24,7 +24,7 @@ export default function HomeScreen() {
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
     const [menuVisible, setMenuVisible] = useState(false);
     // @ts-ignore
-    //const {location, errorMsg} = LocationComp();
+    const {location, errorMsg} = LocationComp();
     const router = useRouter();
 
 
@@ -43,12 +43,12 @@ export default function HomeScreen() {
         borderColor: isDarkMode ? '#555' : '#ccc',
     }), [isDarkMode]);
 
+    console.log(location !== null ? location: "hæææ");
+
     return (
         <SafeAreaView style={[styles.safeContainer, { backgroundColor: isDarkMode ? '#121212' : '#fff' }]}>
 
-            <View style={styles.container}>
-                <Text style={styles.paragraph}>hei!</Text>
-            </View>
+
 
 
             {/* Navbar */}
@@ -103,6 +103,13 @@ export default function HomeScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             />
+            <View style={styles.container}>
+
+                <Text style={styles.paragraph}>{
+                    // @ts-ignore
+                    location !== null ? location.toString(): errorMsg
+                }</Text>
+            </View>
 
             {/* BottomMenu */}
             <BottomMenu />
@@ -171,5 +178,6 @@ const styles = StyleSheet.create({
     paragraph: {
         fontSize: 18,
         textAlign: 'center',
+        color: 'red',
     },
 });
