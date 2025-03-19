@@ -4,8 +4,6 @@ import { collections } from "../services/conn";
 
 export const klubberRouter = express.Router();
 
-
-
 // Hent alle klubber
 // @ts-ignore
 klubberRouter.get("/", async (req: Request, res: Response) => {
@@ -13,13 +11,13 @@ klubberRouter.get("/", async (req: Request, res: Response) => {
         if (!collections.klubber) {
             return res.status(500).send("Database collection not initialized");
         }
-
         const klubber = await collections.klubber.find({}).toArray();
         res.status(200).json(klubber);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
 });
+
 // Opprett en ny klubb
 // @ts-ignore
 klubberRouter.post("/", async (req: Request, res: Response) => {
