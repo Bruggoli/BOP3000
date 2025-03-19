@@ -5,28 +5,15 @@ import ClubItem from '@/components/ClubItem';
 import BottomMenu from "@/components/Navigation/BottomMenu";
 import Navbar from "@/components/Navigation/Navbar";
 
-// type for klubbene
-interface Klubb {
-    _id: string;
-    navn: string;
-    beskrivelse: string;
-    admin: string;
-    medlemmer: string[];
-    createdAt: string;
-}
-
 export default function ClubsScreen() {
-    const [clubs, setClubs] = useState<Klubb[]>([]); // 🔹 Bruker typen Klubb[]
+    const [clubs, setClubs] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchClubs = async () => {
             try {
-                const response = await fetch('http://localhost:3000/klubb'); // Henter fra backend
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data: Klubb[] = await response.json();
+                const response = await fetch('http://localhost:3000/klubb');
+                const data = await response.json();
                 setClubs(data);
             } catch (error) {
                 console.error('Feil ved henting av klubber:', error);
@@ -34,7 +21,6 @@ export default function ClubsScreen() {
                 setLoading(false);
             }
         };
-
         fetchClubs();
     }, []);
 
@@ -48,7 +34,7 @@ export default function ClubsScreen() {
                 ) : (
                     <FlatList
                         data={clubs}
-                        keyExtractor={(item) => item._id} // 🎯 Nå vet TypeScript at _id eksisterer
+                        keyExtractor={(item) => item._id}
                         renderItem={({ item }) => <ClubItem club={item} />}
                     />
                 )}
@@ -66,16 +52,14 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     clubBox: {
-        backgroundColor: '#222', // Bakgrunnsfarge for boksen
-        borderRadius: 12, // Runde hjørner
+        backgroundColor: '#222',
+        borderRadius: 12,
         padding: 15,
-        marginTop: 20, // 🚀 Senker boksene litt ned fra Navbar
-        shadowColor: '#000', // Skygge for effekt
+        marginTop: 20,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 5, // Skygge på Android
+        elevation: 5,
     },
 });
-
-
