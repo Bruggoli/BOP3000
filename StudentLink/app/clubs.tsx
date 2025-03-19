@@ -12,7 +12,7 @@ export default function ClubsScreen() {
     useEffect(() => {
         const fetchClubs = async () => {
             try {
-                const response = await fetch('http://localhost:3000/klubb');
+                const response = await fetch('http://10.0.2.2:3000/klubb');
                 const data = await response.json();
                 setClubs(data);
             } catch (error) {

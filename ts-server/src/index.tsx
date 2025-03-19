@@ -11,6 +11,11 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+// @ts-ignore
+app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 Server kjører på http://0.0.0.0:${port}`);
+});
+
 
 // Middleware for JSON-parsing
 app.use(express.json());
