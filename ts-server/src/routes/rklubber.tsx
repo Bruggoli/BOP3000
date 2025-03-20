@@ -4,64 +4,58 @@ import { collections } from "../services/conn";
 
 export const klubberRouter = express.Router();
 
-// Hent alle klubber
+// Hent alle klubber eller søk etter en klubb
 // @ts-ignore
 klubberRouter.get("/", async (req: Request, res: Response) => {
     try {
         if (!collections.klubber) {
             return res.status(500).send("Database collection not initialized");
         }
-        const klubber = await collections.klubber.find({}).toArray();
+
+        const searchQuery = req.query.q as string; // Henter søketeksten fra frontend
+        let filter = {};
+
+        if (searchQuery) {
+            filter = { navn: { $regex: searchQuery, $options: "i" } }; // Case-insensitiv søk
+        }
+
+        const klubber = await collections.klubber.find(filter).toArray();
         res.status(200).json(klubber);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
 });
 
+
 // Opprett en ny klubb
 // @ts-ignore
 klubberRouter.post("/", async (req: Request, res: Response) => {
     try {
-        if (!collections.klubber || !collections.profiler) {
+        if (!collections.klubber) {
             return res.status(500).send("Database collection not initialized");
         }
 
-        const { navn, beskrivelse, brukerId } = req.body;
-
+        const { brukerId, navn, beskrivelse } = req.body;
         if (!brukerId || !navn || !beskrivelse) {
             return res.status(400).send("Mangler brukerId, navn eller beskrivelse");
         }
 
-        const brukerObjectId = new ObjectId(brukerId);
-
-        // Sjekk om brukeren finnes
-        const bruker = await collections.profiler.findOne({ _id: brukerObjectId });
-        if (!bruker) {
-            return res.status(404).send("Bruker ikke funnet");
-        }
-
-        // Opprett ny klubb med brukeren som admin
         const nyKlubb = {
+            brukerId,
             navn,
             beskrivelse,
-            admin: brukerObjectId,
-            medlemmer: [{ brukerId: brukerObjectId, rolle: "Admin" }]
+            opprettet: new Date(),
         };
 
-        const resultat = await collections.klubber.insertOne(nyKlubb);
-        const klubbId = resultat.insertedId;
-
-        // Legg til klubben i brukerens medlemskap
-        await collections.profiler.updateOne(
-            { _id: brukerObjectId },
-            { $push: { medlemskap: { klubbId, rolle: "Admin" } } as any}
-        );
-
-        res.status(201).json({ message: "Klubb opprettet!", id: klubbId });
-    } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        await collections.klubber.insertOne(nyKlubb);
+        const klubber = await collections.klubber.find({}).toArray();
+        res.status(200).json(klubber);
+    } catch (error: any) {
+        console.error("❌ Feil ved oppretting av klubb:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
+
 
 
 // Bli med i en klubb

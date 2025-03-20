@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-export default interface Post {
+export default interface MPost {
     _id?: ObjectId;
     brukerId: ObjectId; //
     tittel: string;

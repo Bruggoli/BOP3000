@@ -1,9 +1,9 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { klubberRouter } from "./routes/klubber";
-import { profilRouter } from "./routes/profil";
-import { postRouter } from "./routes/post";
-import { kommentarRouter } from "./routes/kommentar";
+import { klubberRouter } from "./routes/rklubber";
+import { profilRouter } from "./routes/rprofil";
+import { postRouter } from "./routes/rpost";
+import { kommentarRouter } from "./routes/rkommentar";
 import connectToDb from "./services/conn";
 
 // Last inn miljøvariabler fra .env
@@ -16,7 +16,6 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 Server kjører på http://0.0.0.0:${port}`);
 });
 
-
 // Middleware for JSON-parsing
 app.use(express.json());
 
@@ -28,7 +27,7 @@ connectToDb()
         // Registrer routes
         app.use("/klubb", klubberRouter);
         app.use("/profil", profilRouter);
-        app.use("/", postRouter);
+        app.use("/post", postRouter);
         // Kommentarer lastes inn via poster, men beholdes midlertidig
         app.use("/kommentar", kommentarRouter);
 
@@ -57,7 +56,7 @@ app.get("/status", (req: Request, res: Response) => {
 /*
 for å kjøre databasen skriv:
 "cd ts-server" for å navigere til riktig mappe
-"npx ts-node scr/startdb.tsx" for å starte serveren
+"npx ts-node src/startdb.tsx" for å starte serveren
 
 For å sette inn en klubb:
 curl -X POST http://localhost:3000/klubber -H "Content-Type: application/json" -d '{
