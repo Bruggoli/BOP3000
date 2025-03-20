@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import Profil from "../models/Profil";
+import MProfil from "../models/mProfil";
 
 export const profilRouter = express.Router();
 
@@ -13,7 +13,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
             return res.status(500).send("Database collection not initialized");
         }
 
-        const nyProfil: Profil = req.body;
+        const nyProfil: MProfil = req.body;
         const resultat = await collections.profiler.insertOne(nyProfil);
 
         res.status(201).json({ message: "Profil opprettet!", id: resultat.insertedId });

@@ -7,25 +7,85 @@ import Post from '@/components/Posts/Post';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import { LocationComp } from '@/components/LocationComp';
 import { Ionicons } from '@expo/vector-icons';
-
-const posts = [
-    { id: '1', user: 'Ola Nordmann', text: 'Noen fra Breisås som har bedøk i morra som kjører???', location: 'Breisås', theme: 'red' },
-    { id: '2', user: 'Stine Fine', text: 'Plumbo vors på Gulbring !!', location: 'Gulbring', theme: 'blue' },
-    { id: '3', user: 'Kultur Kaia', text: 'Vi trenger folk til å jobbe Plumbo, vaktsjefene lover å ha utvida!!', location: 'Grivi', theme: 'green' },
-    { id: '4', user: 'Adrian Ro', text: 'Æ E Fyllesjuk!!', location: '', theme: 'orange' },
-    { id: '5', user: 'Emma Nilsen', text: 'Noen som vil spille volleyball i hallen?', location: 'Sportshallen', theme: 'yellow' },
-    { id: '6', user: 'Jonas Berg', text: 'Quiz-kveld på Kafe Gul! Hvem blir med?', location: 'Kafe Gul', theme: 'purple' },
-    { id: '7', user: 'Sofie Hansen', text: 'Gratis pizza til de første 10 på møte!', location: 'Studenthuset', theme: 'pink' },
-    { id: '8', user: 'Mathias Lund', text: 'Noen som vil ha gruppeøving i matte?', location: 'Biblioteket', theme: 'cyan' },
-];
+import { ObjectId } from "mongodb";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen() {
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
     const [menuVisible, setMenuVisible] = useState(false);
+    const [posts, setPosts] = useState<MPost[]>([]);
+    const [loading, setLoading] = useState(true);
     // @ts-ignore
     const {location, errorMsg} = LocationComp();
     const router = useRouter();
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const fetchPosts = async () => {
+                try {
+                    const response = await fetch('http://10.0.2.2:3000/post');
+                    if (!response.ok) {
+                        throw new Error(`HTTP-feil! Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    setPosts(data);
+                } catch (error) {
+                    console.error('Feil ved henting av poster:', error);
+                }
+            };
+
+            fetchPosts();
+        }, [])
+    );
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const response = await fetch('http://10.0.2.2:3000/post');
+                if (!response.ok) {
+                    throw new Error(`HTTP-feil! Status: ${response.status}`);
+                }
+
+                const data: MPost[] = await response.json();
+
+                // Konverter ObjectId til string og formater datoer
+                const formattedData = data.map(post => ({
+                    ...post,
+                    _id: post._id?.toString(),
+                    brukerId: post.brukerId.toString(),
+                    opprettet: new Date(post.opprettet).toLocaleString(),
+                    kommentarer: post.kommentarer?.map(kom => ({
+                        ...kom,
+                        brukerId: kom.brukerId.toString(),
+                        opprettet: new Date(kom.opprettet).toLocaleString(),
+                    })) || []
+                }));
+
+                console.log("Hentede poster:", formattedData);
+                setPosts(formattedData);
+            } catch (error) {
+                console.error('Feil ved henting av poster:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPosts();
+    }, []);
+
+
+    interface MPost {
+        _id?: string; // ObjectId lagres som string i frontend
+        brukerId: string;
+        tittel: string;
+        innhold: string;
+        likes?: string[];
+        kommentarer?: { brukerId: string; tekst: string; opprettet: string }[];
+        opprettet: string;
+    }
+
 
 
     const toggleTheme = () => {
@@ -36,7 +96,6 @@ export default function HomeScreen() {
         setMenuVisible(!menuVisible);
     };
 
-    // 🎨 Dynamiske stiler basert på Dark/Light Mode
     const themeStyles = useMemo(() => ({
         menuBackground: isDarkMode ? '#333' : 'white',
         textColor: isDarkMode ? 'white' : '#000',
@@ -47,9 +106,6 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={[styles.safeContainer, { backgroundColor: isDarkMode ? '#121212' : '#fff' }]}>
-
-
-
 
             {/* Navbar */}
             <View style={styles.navbar}>
@@ -97,11 +153,17 @@ export default function HomeScreen() {
             {/* FlatList for Posts */}
             <FlatList
                 data={posts}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <Post post={item} />}
+                keyExtractor={(item) => item._id!} // ObjectId som string
+                renderItem={({ item }) => (
+                    <View style={styles.postContainer}>
+                        <Text style={styles.postTitle}>{item.tittel}</Text>
+                        <Text style={styles.postContent}>{item.innhold}</Text>
+                        <Text style={styles.postTimestamp}>{item.opprettet}</Text>
+                    </View>
+                )}
+                ListEmptyComponent={<Text style={styles.noPosts}>Ingen innlegg funnet.</Text>}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
             />
             <View style={styles.container}>
 
@@ -181,3 +243,33 @@ const styles = StyleSheet.create({
         color: 'red',
     },
 });
+
+    //midlertidlig ccs
+        postContainer: {
+            backgroundColor: '#222',
+            padding: 15,
+            marginVertical: 10,
+            borderRadius: 10,
+        },
+        postTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: 'white',
+        },
+        postContent: {
+            fontSize: 14,
+            color: '#ccc',
+            marginTop: 5,
+        },
+        postTimestamp: {
+            fontSize: 12,
+            color: '#777',
+            marginTop: 10,
+            textAlign: 'right',
+        },
+        noPosts: {
+            textAlign: 'center',
+            color: 'white',
+            marginTop: 20,
+        },
+    });

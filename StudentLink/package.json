@@ -48,6 +48,8 @@
     "react-native-webview": "13.12.5",
     "expo-device": "~7.0.2",
     "expo-dev-client": "~5.0.14"
+    "react-native-webview": "13.12.5",
+    "ts-server": "^0.0.15"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
