@@ -1,5 +1,10 @@
 {
   "android": {
     "package": "com.anonymous.tsserver"
+  },
+  "extra": {
+    "eas": {
+      "projectId": "c7d3c7eb-5cdd-4220-8df5-4d306f87b15b"
+    }
   }
 }

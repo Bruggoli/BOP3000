@@ -32,10 +32,6 @@ export default function Navbar({ location, toggleTheme }: { location: string, to
             >
                 <TouchableOpacity style={styles.modalBackground} onPress={toggleMenu}>
                     <View style={styles.menuContainer}>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/profile'); }} style={styles.menuItem}>
-                            <Ionicons name="person-outline" size={20} color="black" />
-                            <Text style={styles.menuText}>Profile</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => { toggleMenu(); router.push('/clubs'); }} style={styles.menuItem}>
                             <Ionicons name="people-outline" size={20} color="black" />
                             <Text style={styles.menuText}>Clubs</Text>
