@@ -24,7 +24,7 @@ export default function HomeScreen() {
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
     const [menuVisible, setMenuVisible] = useState(false);
     // @ts-ignore
-    const {location, errorMsg} = LocationComp();
+    const { location, errorMsg } = LocationComp();
     const router = useRouter();
 
 

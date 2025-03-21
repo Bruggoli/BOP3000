@@ -2,7 +2,8 @@ import {useEffect, useState} from "react";
 import * as Location from "expo-location";
 
 export function LocationComp() {
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    // const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    const [location, setLocation] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     useEffect(() => {
@@ -17,8 +18,8 @@ export function LocationComp() {
 
             console.warn(status.toString())
 
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
+            //let location = await Location.getCurrentPositionAsync({});
+            setLocation("her");
         }
 
         getCurrentLocation();
