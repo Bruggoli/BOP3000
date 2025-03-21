@@ -4,34 +4,43 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const router = useRouter();
 
-    const handleLogin = async () => {
-        // 🔑 Hardkodet bakdør for testing
-        if (username === 'brukernavn' && password === 'admin') {
-            await AsyncStorage.setItem('userToken', 'loggedIn');
-            router.replace('/');
+    const handleRegister = async () => {
+        if (!username || !password || !confirmPassword) {
+            Alert.alert('Feil', 'Alle felt må fylles ut');
             return;
         }
 
-        // Hent lagrede brukere fra AsyncStorage
+        if (password !== confirmPassword) {
+            Alert.alert('Feil', 'Passordene matcher ikke');
+            return;
+        }
+
+        // Hent eksisterende brukere fra AsyncStorage
         const storedUsers = await AsyncStorage.getItem('users');
         const users = storedUsers ? JSON.parse(storedUsers) : {};
 
-        if (users[username] && users[username].password === password) {
-            await AsyncStorage.setItem('userToken', 'loggedIn');
-            router.replace('/');
-        } else {
-            Alert.alert('Feil', 'Ugyldig brukernavn eller passord');
+        if (users[username]) {
+            Alert.alert('Feil', 'Brukernavn er allerede tatt');
+            return;
         }
+
+        // Lagre ny bruker
+        users[username] = { password };
+        await AsyncStorage.setItem('users', JSON.stringify(users));
+        await AsyncStorage.setItem('userToken', 'loggedIn'); // Automatisk innlogging
+
+        router.replace('/'); // Gå til hovedsiden etter registrering
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Logg inn</Text>
+            <Text style={styles.title}>Registrer ny bruker</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Brukernavn"
@@ -45,13 +54,19 @@ export default function LoginScreen() {
                 secureTextEntry
                 onChangeText={setPassword}
             />
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                <Text style={styles.loginText}>Logg inn</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Bekreft passord"
+                placeholderTextColor="#aaa"
+                secureTextEntry
+                onChangeText={setConfirmPassword}
+            />
+            <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+                <Text style={styles.registerText}>Registrer</Text>
             </TouchableOpacity>
 
-            {/* Knapp for å gå til registrering */}
-            <TouchableOpacity onPress={() => router.push('/register')} style={styles.link}>
-                <Text style={styles.linkText}>Har du ikke en konto? Registrer deg</Text>
+            <TouchableOpacity onPress={() => router.push('/auth/login')} style={styles.link}>
+                <Text style={styles.linkText}>Har du allerede en konto? Logg inn</Text>
             </TouchableOpacity>
         </SafeAreaView>
     );
@@ -78,14 +93,14 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 15,
     },
-    loginButton: {
+    registerButton: {
         backgroundColor: '#4CAF50',
         padding: 12,
         borderRadius: 8,
         width: '80%',
         alignItems: 'center',
     },
-    loginText: {
+    registerText: {
         color: 'white',
         fontWeight: 'bold',
     },
