@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
+
+
 const themeColors: { [key: string]: string } = {
     red: '#FF6B6B',
     blue: '#5F75FF',

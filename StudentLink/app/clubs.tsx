@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import axios from 'axios'; // Kommentar ut til senere
 import { useRouter } from 'expo-router';
 import ClubItem from '@/components/ClubItem';
 import BottomMenu from "@/components/Navigation/BottomMenu";
@@ -10,48 +9,49 @@ import Navbar from "@/components/Navigation/Navbar";
 export default function ClubsScreen() {
     const [clubs, setClubs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const router = useRouter();
 
     useEffect(() => {
-        // 🚀 Bruker testdata inntil databasen er koblet til
-        const mockClubs = [
-            {
-                _id: '67b32fb08403dc0a510e500d',
-                navn: 'Bokklubben',
-                beskrivelse: 'En klubb for bokelskere',
-                admin: 'studentnummer*',
-                medlemmer: ['user1'],
-                createdAt: '2024-03-05T12:00:00.000Z',
-            },
-            {
-                _id: '67b32fb08403dc0a510e501e',
-                navn: 'Fotballklubben',
-                beskrivelse: 'For fotballinteresserte',
-                admin: 'studentnummer2',
-                medlemmer: [],
-                createdAt: '2024-03-06T14:30:00.000Z',
-            },
-        ];
-        setClubs(mockClubs);
-        setLoading(false);
-
-        /* 🚀 Avkommenter dette når databasen er klar
-        const fetchClubs = async () => {
-            try {
-                const response = await axios.get('https://your-api-url.com/clubs');
-                setClubs(response.data);
-            } catch (error) {
-                console.error('Feil ved henting av klubber:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchClubs();
-        */
     }, []);
+
+    const fetchClubs = async (query = "") => {
+        try {
+            setLoading(true);
+            const response = await fetch(`http://10.0.2.2:3000/klubb?q=${query}`);
+            const data = await response.json();
+            setClubs(data);
+        } catch (error) {
+            console.error('Feil ved henting av klubber:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        fetchClubs(query);
+    };
 
     return (
         <SafeAreaView style={styles.container}>
             <Navbar location="Klubber" toggleTheme={() => {}} />
+
+            {/* 🔹 Søkeboks */}
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Søk etter klubber..."
+                placeholderTextColor="#aaa"
+                value={searchQuery}
+                onChangeText={handleSearch}
+            />
+
+            {/* 🔹 Knapp for å lage ny klubb */}
+            <TouchableOpacity style={styles.createButton} onPress={() => router.push('/create-klubb')}>
+                <Text style={styles.buttonText}>Lag ny Klubb</Text>
+            </TouchableOpacity>
+
 
             <View style={styles.clubBox}>
                 {loading ? (
@@ -76,15 +76,33 @@ const styles = StyleSheet.create({
         backgroundColor: '#121212',
         padding: 20,
     },
+    searchInput: {
+        backgroundColor: '#222',
+        color: 'white',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10,
+    },
+    createButton: {
+        backgroundColor: '#4CAF50',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
     clubBox: {
-        backgroundColor: '#222', // Bakgrunnsfarge for boksen
-        borderRadius: 12, // Runde hjørner
+        backgroundColor: '#222',
+        borderRadius: 12,
         padding: 15,
-        marginTop: 20, // 🚀 Senker boksene litt ned fra Navbar
-        shadowColor: '#000', // Skygge for effekt
+        marginTop: 10,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 5, // Skygge på Android
+        elevation: 5,
     },
 });

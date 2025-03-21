@@ -2,74 +2,77 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomMenu from "@/components/Navigation/BottomMenu";
+import Navbar from "@/components/Navigation/Navbar";
 
-export default function CreatePost() {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
+export default function CreateKlubb() {
+    const [clubName, setClubName] = useState('');
+    const [description, setDescription] = useState('');
     const router = useRouter();
 
-    const handlePost = async () => {
-        if (!title.trim() || !content.trim()) {
-            Alert.alert('Feil', 'Tittel og innhold kan ikke være tomme.');
+    const handleCreateClub = async () => {
+        if (!clubName.trim() || !description.trim()) {
+            Alert.alert('Feil', 'Klubbnavn og beskrivelse kan ikke være tomme.');
             return;
         }
 
-        const postData = {
-            brukerId: "testUser", // Midlertidig ID
-            tittel: title,
-            innhold: content,
-            opprettet: new Date().toISOString(),
+        // Hent brukerId fra AsyncStorage (midlertidig hardkodet hvis ikke implementert)
+        let userId = await AsyncStorage.getItem('userId');
+        if (!userId) userId = "testUser"; // Midlertidig løsning til innlogging er på plass
+
+        const clubData = {
+            brukerId: userId,
+            navn: clubName,
+            beskrivelse: description,
         };
 
         try {
-            const response = await fetch('http://10.0.2.2:3000/post', {
+            const response = await fetch('http://10.0.2.2:3000/klubb', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(postData),
+                body: JSON.stringify(clubData),
             });
 
             if (!response.ok) {
                 const errorMessage = await response.text();
-                throw new Error(`Feil ved oppretting av post: ${errorMessage}`);
+                throw new Error(`Feil ved oppretting av klubb: ${errorMessage}`);
             }
 
-            const updatedPosts = await response.json();
-            console.log("✅ Oppdatert liste med poster:", updatedPosts);
-
-            router.replace('/');
+            setClubName('');
+            setDescription('');
+            router.replace('/clubs'); // Naviger tilbake til klubboversikten
         } catch (error) {
-            // @ts-ignore
-            console.error('❌ Feil ved publisering:', error.message);
-            // @ts-ignore
+            console.error('Feil ved oppretting av klubb:', error.message);
             Alert.alert('Feil', error.message);
         }
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Lag et nytt innlegg</Text>
+            <Navbar location="Lag ny Klubb" toggleTheme={() => {}} />
+
+            <Text style={styles.title}>Opprett en ny Klubb</Text>
 
             <TextInput
                 style={styles.input}
-                placeholder="Tittel"
+                placeholder="Skriv inn klubbnavn..."
                 placeholderTextColor="#aaa"
-                value={title}
-                onChangeText={setTitle}
+                value={clubName}
+                onChangeText={setClubName}
             />
 
             <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Hva vil du dele?"
+                placeholder="Skriv inn en beskrivelse..."
                 placeholderTextColor="#aaa"
+                value={description}
+                onChangeText={setDescription}
                 multiline
-                numberOfLines={5}
-                value={content}
-                onChangeText={setContent}
             />
 
-            <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-                <Text style={styles.buttonText}>Publiser</Text>
+            <TouchableOpacity style={styles.createButton} onPress={handleCreateClub}>
+                <Text style={styles.buttonText}>Opprett Klubb</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
         height: 100,
         textAlignVertical: 'top',
     },
-    postButton: {
+    createButton: {
         backgroundColor: '#4CAF50',
         padding: 12,
         borderRadius: 8,
@@ -124,3 +127,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
