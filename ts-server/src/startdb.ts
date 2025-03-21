@@ -10,11 +10,9 @@ import connectToDb from "./services/conn";
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
-// @ts-ignore
-app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Server kjører på http://0.0.0.0:${port}`);
-});
+const port = process.env.PORT || 3001;
+const server = process.env.LOCALHOST;
+
 
 // Middleware for JSON-parsing
 app.use(express.json());
@@ -36,8 +34,9 @@ connectToDb()
             res.send("🚀 API is running...");
         });
 
-        app.listen(port, () => {
-            console.log(`🚀 Server kjører på http://localhost:${port}`);
+        // @ts-ignore
+        app.listen(port, '127.0.0.1', () => {
+            console.log(`🚀Server kjører på ${server}:${port}`);
         });
     })
     .catch((error: Error) => {

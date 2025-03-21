@@ -5,10 +5,11 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Post from '@/components/Posts/Post';
 import BottomMenu from '@/components/Navigation/BottomMenu';
-import { LocationComp } from '@/components/LocationComp';
+import { LocationPermission } from '@/components/LocationComp';
 import { Ionicons } from '@expo/vector-icons';
 import { ObjectId } from "mongodb";
 import { useFocusEffect } from '@react-navigation/native';
+
 
 export default function HomeScreen() {
     const systemColorScheme = useColorScheme();
@@ -17,7 +18,7 @@ export default function HomeScreen() {
     const [posts, setPosts] = useState<MPost[]>([]);
     const [loading, setLoading] = useState(true);
     // @ts-ignore
-    const {location, errorMsg} = LocationComp();
+    const {location, errorMsg} = LocationPermission();
     const router = useRouter();
 
     useFocusEffect(
@@ -42,8 +43,9 @@ export default function HomeScreen() {
 
     useEffect(() => {
         const fetchPosts = async () => {
+            alert(process.env.EXPO_PUBLIC_PHONE_HOST);
             try {
-                const response = await fetch('http://10.0.2.2:3000/post');
+                const response = await fetch(process.env.EXPO_PUBLIC_PHONE_HOST + `/post`);
                 if (!response.ok) {
                     throw new Error(`HTTP-feil! Status: ${response.status}`);
                 }
@@ -242,34 +244,32 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: 'red',
     },
-});
-
     //midlertidlig ccs
-        postContainer: {
-            backgroundColor: '#222',
-            padding: 15,
-            marginVertical: 10,
-            borderRadius: 10,
-        },
-        postTitle: {
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: 'white',
-        },
-        postContent: {
-            fontSize: 14,
-            color: '#ccc',
-            marginTop: 5,
-        },
-        postTimestamp: {
-            fontSize: 12,
-            color: '#777',
-            marginTop: 10,
-            textAlign: 'right',
-        },
-        noPosts: {
-            textAlign: 'center',
-            color: 'white',
-            marginTop: 20,
-        },
-    });
+    postContainer: {
+        backgroundColor: '#222',
+        padding: 15,
+        marginVertical: 10,
+        borderRadius: 10,
+    },
+    postTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    postContent: {
+        fontSize: 14,
+        color: '#ccc',
+        marginTop: 5,
+    },
+    postTimestamp: {
+        fontSize: 12,
+        color: '#777',
+        marginTop: 10,
+        textAlign: 'right',
+    },
+    noPosts: {
+        textAlign: 'center',
+        color: 'white',
+        marginTop: 20,
+    },
+});

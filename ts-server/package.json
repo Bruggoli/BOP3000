@@ -2,12 +2,12 @@
   "name": "ts-server",
   "version": "1.0.0",
   "description": "Bachelor :D",
-  "main": "src/startdb.tsx",
+  "main": "src/startdb.ts",
   "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "start": "node dist/startdb.tsx",
-    "dev": "nodemon -r tsconfig-paths/register src/startdb.tsx",
+    "dev": "nodemon -r tsconfig-paths/register src/startdb.ts",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },
