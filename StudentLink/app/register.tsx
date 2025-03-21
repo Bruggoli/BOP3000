@@ -21,22 +21,31 @@ export default function RegisterScreen() {
             return;
         }
 
-        // Hent eksisterende brukere fra AsyncStorage
-        const storedUsers = await AsyncStorage.getItem('users');
-        const users = storedUsers ? JSON.parse(storedUsers) : {};
+        try {
+            alert("trying to connect to server\n" + username + "\n" + password)
+            const response = await fetch("http://10.0.2.2:3000/profil", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ username, password }),
+            });
 
-        if (users[username]) {
-            Alert.alert('Feil', 'Brukernavn er allerede tatt');
-            return;
+            if (response.ok) {
+                const data = await response.json();
+                console.log(data);
+                Alert.alert("Suksess", "Bruker registrert!");
+                router.replace('/');
+            } else {
+                const errorData = await response.json();
+                Alert.alert("Feil", errorData.error || "Noe gikk galt");
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Feil", "Klarte ikke å koble til serveren");
         }
-
-        // Lagre ny bruker
-        users[username] = { password };
-        await AsyncStorage.setItem('users', JSON.stringify(users));
-        await AsyncStorage.setItem('userToken', 'loggedIn'); // Automatisk innlogging
-
-        router.replace('/'); // Gå til hovedsiden etter registrering
     };
+
 
     return (
         <SafeAreaView style={styles.container}>
