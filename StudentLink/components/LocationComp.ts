@@ -21,9 +21,8 @@ export function LocationPermission() {
 
             console.warn(status.toString())
 
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
-
+            //let location = await Location.getCurrentPositionAsync({});
+            setLocation("her");
         }
 
         getCurrentLocation();
@@ -31,7 +30,3 @@ export function LocationPermission() {
 
     return {location, errorMsg}
 }
-
-//export function isInsideArea() {
-//    return location.latitude
-//}
