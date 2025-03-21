@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import Kommentar from "../models/Kommentar";
+import MKommentar from "../models/mKommentar";
 
 export const kommentarRouter = express.Router();
 
@@ -13,7 +13,7 @@ kommentarRouter.post("/", async (req: Request, res: Response) => {
             return res.status(500).send("Database collection not initialized");
         }
 
-        const nyKommentar: Kommentar = {
+        const nyKommentar: MKommentar = {
             ...req.body,
             postId: new ObjectId(req.body.postId), // Konverter postId til ObjectId
             brukerId: new ObjectId(req.body.brukerId), // Konverter brukerId til ObjectId

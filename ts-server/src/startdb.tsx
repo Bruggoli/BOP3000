@@ -1,18 +1,23 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { klubberRouter } from "./routes/klubber";
-import { profilRouter } from "./routes/profil";
-import { postRouter } from "./routes/post";
-import { kommentarRouter } from "./routes/kommentar";
+import { klubberRouter } from "./routes/rklubber";
+import { profilRouter } from "./routes/rprofil";
+import { postRouter } from "./routes/rpost";
+import { kommentarRouter } from "./routes/rkommentar";
 import connectToDb from "./services/conn";
 
+// Last inn miljøvariabler fra .env
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+// @ts-ignore
 
+
+// Middleware for JSON-parsing
 app.use(express.json());
 
+// Koble til databasen og starte serveren
 connectToDb()
     .then(() => {
         console.log("Tilkoblet til MongoDB!");
@@ -20,12 +25,18 @@ connectToDb()
         // Registrer routes
         app.use("/klubb", klubberRouter);
         app.use("/profil", profilRouter);
-        app.use("/", postRouter);
-        // fjern denne etterhvert, trenger ikke egen route for kommentarer siden de skal lastes inn automatisk etter dev
+        app.use("/post", postRouter);
+        // Kommentarer lastes inn via poster, men beholdes midlertidig
         app.use("/kommentar", kommentarRouter);
 
-        app.listen(port, () => {
-            console.log(`Server kjører på http://localhost:${port}`);
+        // Hovedendepunkt
+        app.get("/", (req: Request, res: Response) => {
+            res.send("🚀 API is running...");
+        });
+
+        // @ts-ignore
+        app.listen(port, '127.0.0.1', () => {
+            console.log(`🚀 Server kjører på http://0.0.0.0:${port}`);
         });
     })
     .catch((error: Error) => {
@@ -33,10 +44,18 @@ connectToDb()
         process.exit(1);
     });
 
+app.get("/status", (req: Request, res: Response) => {
+    const status = {
+        "Status": "Running",
+    };
+
+    res.send(status);
+});
+
 /*
 for å kjøre databasen skriv:
 "cd ts-server" for å navigere til riktig mappe
-"npx ts-node scr/index.tsx" for å starte serveren
+"npx ts-node src/startdb.tsx" for å starte serveren
 
 For å sette inn en klubb:
 curl -X POST http://localhost:3000/klubber -H "Content-Type: application/json" -d '{
@@ -88,11 +107,3 @@ taskkill /PID <PID> /F (slkriv det siste 5 tallene som kommer opp når du skrivv
 fjern "<>")
 
  */
-
-app.get("/status", (req: Request, res: Response) => {
-    const status = {
-        "Status": "Running",
-    };
-
-    res.send(status);
-});
