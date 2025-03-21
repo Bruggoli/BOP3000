@@ -10,7 +10,7 @@ import connectToDb from "./services/conn";
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 const server = process.env.LOCALHOST;
 
 
