@@ -14,7 +14,7 @@ export default function CreatePost() {
             Alert.alert('Feil', 'Tittel og innhold kan ikke være tomme.');
             return;
         }
-
+// test user må bli fjernet når profiler er i orden
         const postData = {
             brukerId: "testUser", // Midlertidig ID
             tittel: title,

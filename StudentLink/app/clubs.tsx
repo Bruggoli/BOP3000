@@ -38,7 +38,7 @@ export default function ClubsScreen() {
         <SafeAreaView style={styles.container}>
             <Navbar location="Klubber" toggleTheme={() => {}} />
 
-            {/* 🔹 Søkeboks */}
+            {/* Søkeboks */}
             <TextInput
                 style={styles.searchInput}
                 placeholder="Søk etter klubber..."
@@ -47,7 +47,7 @@ export default function ClubsScreen() {
                 onChangeText={handleSearch}
             />
 
-            {/* 🔹 Knapp for å lage ny klubb */}
+            {/* Knapp for å lage ny klubb */}
             <TouchableOpacity style={styles.createButton} onPress={() => router.push('/create-klubb')}>
                 <Text style={styles.buttonText}>Lag ny Klubb</Text>
             </TouchableOpacity>
