@@ -5,7 +5,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Post from '@/components/Posts/Post';
 import BottomMenu from '@/components/Navigation/BottomMenu';
-import { LocationComp } from '@/components/LocationComp';
+import { LocationPermission } from '@/components/LocationComp';
 import { Ionicons } from '@expo/vector-icons';
 import { ObjectId } from "mongodb";
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,10 +14,10 @@ export default function HomeScreen() {
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
     const [menuVisible, setMenuVisible] = useState(false);
-    // @ts-ignore
-    const { location, errorMsg } = LocationComp();
     const [posts, setPosts] = useState<MPost[]>([]);
     const [loading, setLoading] = useState(true);
+    // @ts-ignore
+    const { location, errorMsg } = LocationComp();
     const router = useRouter();
 
     useFocusEffect(
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-         padding: 20,
+        padding: 20,
     },
     paragraph: {
         fontSize: 18,
