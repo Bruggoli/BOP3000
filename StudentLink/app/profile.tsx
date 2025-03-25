@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Navbar from '@/components/Navigation/Navbar';
 import BottomMenu from '@/components/Navigation/BottomMenu';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const profilePictures = [
     require('@/assets/avatars/avatar1.png'),

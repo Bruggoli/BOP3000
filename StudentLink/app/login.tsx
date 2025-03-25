@@ -12,8 +12,14 @@ export default function LoginScreen() {
     const handleLogin = async () => {
         // 🔑 Hardkodet bakdør for testing
         if (username === 'brukernavn' && password === 'admin') {
-            await AsyncStorage.setItem('userToken', 'loggedIn');
-            router.replace('/');
+            try {
+
+                await AsyncStorage.setItem('userToken', 'loggedIn');
+                router.replace('/');
+                return;
+            } catch (e) {
+                console.warn("Error saving during handleLogin");
+            }
             return;
         }
 

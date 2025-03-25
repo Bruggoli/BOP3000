@@ -18,6 +18,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
 
         res.status(201).json({ message: "Profil opprettet!", id: resultat.insertedId });
     } catch (error: any) {
+        // Gi klar beskjed med hva som skjedde
         res.status(500).json({ error: error.message });
     }
 });
