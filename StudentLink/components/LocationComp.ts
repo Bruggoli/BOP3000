@@ -2,38 +2,39 @@ import {useEffect, useState} from "react";
 import * as Location from "expo-location";
 import asyncStorage from "@react-native-async-storage/async-storage/src/AsyncStorage";
 import {JsonObject} from "type-fest";
-import {LocationObject} from "expo-location";
+import {LocationObject, LocationPermissionResponse} from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 export function LocationComp() {
     // const [location, setLocation] = useState<Location.LocationObject | null>(null);
     // location er en array med longditude+latidude
-    const [location, setLocation] = useState<LocationObject | null>(null);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [locationStatus, setLocationStatus] = useState<string | null>(null);
 
     useEffect(() => {
         async function getCurrentLocation(): Promise<void> {
 
             // @ts-ignore
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                setErrorMsg('Permission to access location was denied');
+            let  status: LocationPermissionStatus  = await Location.requestForegroundPermissionsAsync();
+            console.log(status.status);
+            if (status.status != 'granted') {
+                setLocationStatus('Permission to access location was denied');
                 // burde redirectes til en "du må gi location access" side
+                //
+                router.replace("/terms-of-service");
                 return;
             }
-
-            console.warn(status.toString());
-
-            let getLocation = await Location.getCurrentPositionAsync({});
-            setLocation(getLocation);
-
         }
-
         getCurrentLocation();
-        storeLocationData(location);
+
     }, []);
 
-    return {location, errorMsg}
+    return locationStatus;
+}
+
+export function getLocationData (): boolean {
+
+    return false;
 }
 
 const storeLocationData = async (locationData: LocationObject | null): Promise<void> => {

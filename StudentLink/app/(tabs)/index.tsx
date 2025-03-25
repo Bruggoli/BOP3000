@@ -5,7 +5,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Post from '@/components/Posts/Post';
 import BottomMenu from '@/components/Navigation/BottomMenu';
-import { LocationPermission } from '@/components/LocationComp';
+import { LocationComp } from '@/components/LocationComp';
 import { Ionicons } from '@expo/vector-icons';
 import { ObjectId } from "mongodb";
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,7 +17,7 @@ export default function HomeScreen() {
     const [posts, setPosts] = useState<MPost[]>([]);
     const [loading, setLoading] = useState(true);
     // @ts-ignore
-    const { location, errorMsg } = LocationComp();
+    const { location, errorMsg } = useState(LocationComp());
     const router = useRouter();
 
     useFocusEffect(
@@ -102,8 +102,6 @@ export default function HomeScreen() {
         borderColor: isDarkMode ? '#555' : '#ccc',
     }), [isDarkMode]);
 
-    console.log(location !== null ? location: "hæææ");
-
     return (
         <SafeAreaView style={[styles.safeContainer, { backgroundColor: isDarkMode ? '#121212' : '#fff' }]}>
 
@@ -169,7 +167,7 @@ export default function HomeScreen() {
 
                 <Text style={styles.paragraph}>{
                     // @ts-ignore
-                    location !== null ? location.toString(): errorMsg
+                    location !== null ? location: errorMsg
                 }</Text>
             </View>
 
