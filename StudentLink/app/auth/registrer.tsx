@@ -21,21 +21,30 @@ export default function RegisterScreen() {
             return;
         }
 
-        // Hent eksisterende brukere fra AsyncStorage
-        const storedUsers = await AsyncStorage.getItem('users');
-        const users = storedUsers ? JSON.parse(storedUsers) : {};
+        const profil = {
+            brukernavn: username,
+            passord: password,
+            icon: 'https://your-api.com/avatars/avatar1.png',
+            medlemskap: [],
+        };
 
-        if (users[username]) {
-            Alert.alert('Feil', 'Brukernavn er allerede tatt');
-            return;
+        try {
+            const response = await fetch('http://10.0.2.2:3000/profil', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profil),
+            });
+
+            const result = await response.json();
+            const userId = result.id;
+
+            await AsyncStorage.setItem('userId', userId);
+            await AsyncStorage.setItem('userToken', 'loggedIn');
+            router.replace('/');
+        } catch (err) {
+            console.error("Registreringsfeil:", err);
+            Alert.alert('Feil', 'Kunne ikke registrere bruker.');
         }
-
-        // Lagre ny bruker
-        users[username] = { password };
-        await AsyncStorage.setItem('users', JSON.stringify(users));
-        await AsyncStorage.setItem('userToken', 'loggedIn'); // Automatisk innlogging
-
-        router.replace('/'); // Gå til hovedsiden etter registrering
     };
 
     return (
@@ -64,7 +73,6 @@ export default function RegisterScreen() {
             <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
                 <Text style={styles.registerText}>Registrer</Text>
             </TouchableOpacity>
-
             <TouchableOpacity onPress={() => router.push('/auth/login')} style={styles.link}>
                 <Text style={styles.linkText}>Har du allerede en konto? Logg inn</Text>
             </TouchableOpacity>
@@ -75,39 +83,40 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#121212',
+        padding: 20,
+        justifyContent: 'center',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
-        width: '80%',
-        padding: 12,
         backgroundColor: '#222',
         color: 'white',
+        padding: 12,
         borderRadius: 8,
-        marginBottom: 15,
+        marginBottom: 12,
     },
     registerButton: {
         backgroundColor: '#4CAF50',
         padding: 12,
         borderRadius: 8,
-        width: '80%',
         alignItems: 'center',
+        marginTop: 10,
     },
     registerText: {
         color: 'white',
         fontWeight: 'bold',
     },
     link: {
-        marginTop: 15,
+        marginTop: 16,
+        alignItems: 'center',
     },
     linkText: {
-        color: '#4CAF50',
+        color: '#29B6F6',
     },
 });

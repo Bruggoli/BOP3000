@@ -1,135 +1,125 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { FlatList, StyleSheet, View, Modal, TouchableOpacity, Text, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { FlatList, StyleSheet, View, Text, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
-import Post from '@/components/Posts/Post';
-import BottomMenu from '@/components/Navigation/BottomMenu';
-import { Ionicons } from '@expo/vector-icons';
-import { ObjectId } from "mongodb";
 import { useFocusEffect } from '@react-navigation/native';
+import Navbar from "@/components/Navigation/Navbar";
+import BottomMenu from "@/components/Navigation/BottomMenu";
+import PostCard from "@/components/Posts/PostCard";
 
 export default function HomeScreen() {
-    const systemColorScheme = useColorScheme();
-    const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
-    const [menuVisible, setMenuVisible] = useState(false);
-    const [posts, setPosts] = useState<MPost[]>([]);
+    const [posts, setPosts] = useState<MappedPost[]>([]);
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
+    const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
 
     useFocusEffect(
         React.useCallback(() => {
-            const fetchPosts = async () => {
-                try {
-                    const response = await fetch('http://10.0.2.2:3000/post');
-                    if (!response.ok) {
-                        throw new Error(`HTTP-feil! Status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    setPosts(data);
-                } catch (error) {
-                    console.error('Feil ved henting av poster:', error);
-                }
-            };
-
-            fetchPosts();
+            fetchEverything();
         }, [])
     );
 
-    useEffect(() => {
-        const fetchPosts = async () => {
-            try {
-                const response = await fetch('http://10.0.2.2:3000/post');
-                if (!response.ok) {
-                    throw new Error(`HTTP-feil! Status: ${response.status}`);
-                }
+    const fetchEverything = async () => {
+        try {
+            const [postRes, profileRes] = await Promise.all([
+                fetch('http://10.0.2.2:3000/post'),
+                fetch('http://10.0.2.2:3000/profil'),
+            ]);
 
-                const data: MPost[] = await response.json();
+            const rawPosts = await postRes.json();
+            const profileList: UserProfile[] = await profileRes.json();
 
-                // Konverter ObjectId til string og formater datoer
-                const formattedData = data.map(post => ({
-                    ...post,
-                    _id: post._id?.toString(),
-                    brukerId: post.brukerId.toString(),
-                    opprettet: new Date(post.opprettet).toLocaleString(),
-                    kommentarer: post.kommentarer?.map(kom => ({
-                        ...kom,
-                        brukerId: kom.brukerId.toString(),
-                        opprettet: new Date(kom.opprettet).toLocaleString(),
-                    })) || []
-                }));
-
-                console.log("Hentede poster:", formattedData);
-                setPosts(formattedData);
-            } catch (error) {
-                console.error('Feil ved henting av poster:', error);
-            } finally {
-                setLoading(false);
+            const profileMap: Record<string, UserProfile> = {};
+            for (const profile of profileList) {
+                profileMap[profile._id.toString()] = profile;
             }
+
+            const formatted = rawPosts
+                .map((post: any) => {
+                    const brukerIdStr = post.brukerId?.toString();
+                    const profil = profileMap[brukerIdStr];
+                    const createdAt = new Date(post.opprettet);
+                    const timestamp = `${createdAt.getDate().toString().padStart(2, '0')}.${(createdAt.getMonth() + 1).toString().padStart(2, '0')} kl. ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
+
+                    return {
+                        postId: post._id?.toString(),
+                        userId: brukerIdStr,
+                        username: profil?.brukernavn || brukerIdStr,
+                        userAvatar: profil?.icon || 'avatar1.png',
+                        title: post.tittel,
+                        text: post.innhold,
+                        location: post.location || '',
+                        color: getColorByClub(post.klubbId),
+                        likes: post.likes?.length || 0,
+                        comments: post.kommentarer?.length || 0,
+                        timestamp: timestamp,
+                        createdAt: createdAt
+                    };
+                })
+                .sort((a: MappedPost, b: MappedPost) => b.createdAt.getTime() - a.createdAt.getTime());
+
+            setProfiles(profileMap);
+            setPosts(formatted);
+        } catch (error) {
+            console.error("Feil ved lasting av poster eller profiler:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getColorByClub = (klubbId?: string) => {
+        const clubColors: Record<string, string> = {
+            "klubb1": "#4CAF50",
+            "klubb2": "#2196F3",
+            "klubb3": "#FFC107",
         };
 
-        fetchPosts();
-    }, []);
+        if (!klubbId) {
+            const randomColors = ["#FF7043", "#AB47BC", "#29B6F6", "#66BB6A", "#FFCA28"];
+            return randomColors[Math.floor(Math.random() * randomColors.length)];
+        }
 
-
-    interface MPost {
-        _id?: string; // ObjectId lagres som string i frontend
-        brukerId: string;
-        tittel: string;
-        innhold: string;
-        likes?: string[];
-        kommentarer?: { brukerId: string; tekst: string; opprettet: string }[];
-        opprettet: string;
-    }
-
-
-
-    const toggleTheme = () => {
-        setIsDarkMode(!isDarkMode);
+        return clubColors[klubbId] || "#607D8B";
     };
-
-    const toggleMenu = () => {
-        setMenuVisible(!menuVisible);
-    };
-
-    const themeStyles = useMemo(() => ({
-        menuBackground: isDarkMode ? '#333' : 'white',
-        textColor: isDarkMode ? 'white' : '#000',
-        borderColor: isDarkMode ? '#555' : '#ccc',
-    }), [isDarkMode]);
-
 
     return (
         <SafeAreaView style={styles.safeContainer}>
             <StatusBar barStyle="light-content" />
-
-            {/* 🚀 Bruk Navbar her */}
             <Navbar location="Hjem" toggleTheme={() => {}} />
 
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.postId}
                 renderItem={({ item }) => <PostCard {...item} />}
-                keyExtractor={(item) => item._id!} // ObjectId som string
-                renderItem={({ item }) => (
-                    <View style={styles.postContainer}>
-                        <Text style={styles.postTitle}>{item.tittel}</Text>
-                        <Text style={styles.postContent}>{item.innhold}</Text>
-                        <Text style={styles.postTimestamp}>{item.opprettet}</Text>
-                    </View>
-                )}
                 ListEmptyComponent={<Text style={styles.noPosts}>Ingen innlegg funnet.</Text>}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             />
 
-
             <BottomMenu />
         </SafeAreaView>
     );
 }
+
+type MappedPost = {
+    postId: string;
+    userId: string;
+    username: string;
+    userAvatar?: string;
+    title: string;
+    text: string;
+    location: string;
+    color: string;
+    likes: number;
+    comments: number;
+    timestamp: string;
+    createdAt: Date;
+};
+
+type UserProfile = {
+    _id: string;
+    brukernavn: string;
+    icon?: string;
+};
 
 const styles = StyleSheet.create({
     safeContainer: {
@@ -139,33 +129,9 @@ const styles = StyleSheet.create({
     list: {
         paddingBottom: 80,
     },
-
-    //midlertidlig ccs
-        postContainer: {
-            backgroundColor: '#222',
-            padding: 15,
-            marginVertical: 10,
-            borderRadius: 10,
-        },
-        postTitle: {
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: 'white',
-        },
-        postContent: {
-            fontSize: 14,
-            color: '#ccc',
-            marginTop: 5,
-        },
-        postTimestamp: {
-            fontSize: 12,
-            color: '#777',
-            marginTop: 10,
-            textAlign: 'right',
-        },
-        noPosts: {
-            textAlign: 'center',
-            color: 'white',
-            marginTop: 20,
-        },
-    });
+    noPosts: {
+        textAlign: 'center',
+        color: 'white',
+        marginTop: 20,
+    },
+});
