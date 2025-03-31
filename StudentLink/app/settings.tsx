@@ -42,7 +42,7 @@ export default function SettingsScreen() {
 
     const handleLogout = async () => {
         await AsyncStorage.removeItem('userToken');
-        router.replace('/login');
+        router.replace('/auth/login');
     };
 
     return (

@@ -21,31 +21,31 @@ export default function RegisterScreen() {
             return;
         }
 
+        const profil = {
+            brukernavn: username,
+            passord: password,
+            icon: 'https://your-api.com/avatars/avatar1.png',
+            medlemskap: [],
+        };
+
         try {
-            alert("trying to connect to server\n" + username + "\n" + password)
-            const response = await fetch("http://10.0.2.2:3000/profil", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ username, password }),
+            const response = await fetch('http://10.0.2.2:3000/profil', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profil),
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log(data);
-                Alert.alert("Suksess", "Bruker registrert!");
-                router.replace('/');
-            } else {
-                const errorData = await response.json();
-                Alert.alert("Feil", errorData.error || "Noe gikk galt");
-            }
-        } catch (error) {
-            console.error(error);
-            Alert.alert("Feil", "Klarte ikke å koble til serveren");
+            const result = await response.json();
+            const userId = result.id;
+
+            await AsyncStorage.setItem('userId', userId);
+            await AsyncStorage.setItem('userToken', 'loggedIn');
+            router.replace('/');
+        } catch (err) {
+            console.error("Registreringsfeil:", err);
+            Alert.alert('Feil', 'Kunne ikke registrere bruker.');
         }
     };
-
 
     return (
         <SafeAreaView style={styles.container}>
@@ -73,8 +73,7 @@ export default function RegisterScreen() {
             <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
                 <Text style={styles.registerText}>Registrer</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => router.push('/login')} style={styles.link}>
+            <TouchableOpacity onPress={() => router.push('/auth/login')} style={styles.link}>
                 <Text style={styles.linkText}>Har du allerede en konto? Logg inn</Text>
             </TouchableOpacity>
         </SafeAreaView>
@@ -84,39 +83,40 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#121212',
+        padding: 20,
+        justifyContent: 'center',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
-        width: '80%',
-        padding: 12,
         backgroundColor: '#222',
         color: 'white',
+        padding: 12,
         borderRadius: 8,
-        marginBottom: 15,
+        marginBottom: 12,
     },
     registerButton: {
         backgroundColor: '#4CAF50',
         padding: 12,
         borderRadius: 8,
-        width: '80%',
         alignItems: 'center',
+        marginTop: 10,
     },
     registerText: {
         color: 'white',
         fontWeight: 'bold',
     },
     link: {
-        marginTop: 15,
+        marginTop: 16,
+        alignItems: 'center',
     },
     linkText: {
-        color: '#4CAF50',
+        color: '#29B6F6',
     },
 });
