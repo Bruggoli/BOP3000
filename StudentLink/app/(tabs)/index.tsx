@@ -27,28 +27,25 @@ export default function HomeScreen() {
 
             const rawPosts = await postRes.json();
             const profileList: UserProfile[] = await profileRes.json();
-            const klubber = await klubbRes.json();
+            const klubbList: Klubb[] = await klubbRes.json();
 
             const profileMap: Record<string, UserProfile> = {};
-            for (const profile of profileList) {
+            profileList.forEach(profile => {
                 profileMap[profile._id.toString()] = profile;
-            }
+            });
 
-            const klubbMap: Record<string, any> = {};
-            for (const klubb of klubber) {
+            const klubbMap: Record<string, Klubb> = {};
+            klubbList.forEach(klubb => {
                 klubbMap[klubb._id.toString()] = klubb;
-            }
+            });
 
             const formatted = rawPosts
                 .map((post: any) => {
                     const brukerIdStr = post.brukerId?.toString();
                     const profil = profileMap[brukerIdStr];
+                    const klubb = klubbMap[post.klubbId?.toString()];
                     const createdAt = new Date(post.opprettet);
                     const timestamp = `${createdAt.getDate().toString().padStart(2, '0')}.${(createdAt.getMonth() + 1).toString().padStart(2, '0')} kl. ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
-
-                    const klubb = klubbMap[post.klubbId];
-                    const clubName = klubb?.navn || 'new feed';
-                    const location = post.location || klubb?.sted || 'Campus Bø';
 
                     return {
                         postId: post._id?.toString(),
@@ -57,13 +54,13 @@ export default function HomeScreen() {
                         userAvatar: profil?.icon || 'avatar1.png',
                         title: post.tittel,
                         text: post.innhold,
-                        location,
-                        clubName,
+                        location: post.location || "Campus Bø",
+                        clubName: klubb?.navn || "New Feed",
                         color: getColorByClub(post.klubbId),
-                        likes: post.likes?.length || 0,
-                        comments: post.kommentarer?.length || 0,
-                        timestamp,
-                        createdAt,
+                        likes: Array.isArray(post.likes) ? post.likes : [],
+                        comments: Array.isArray(post.kommentarer) ? post.kommentarer.length : 0,
+                        timestamp: timestamp,
+                        createdAt: createdAt,
                     };
                 })
                 .sort((a: MappedPost, b: MappedPost) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -71,7 +68,7 @@ export default function HomeScreen() {
             setProfiles(profileMap);
             setPosts(formatted);
         } catch (error) {
-            console.error("Feil ved lasting av poster, profiler eller klubber:", error);
+            console.error("Feil ved lasting av poster eller profiler:", error);
         } finally {
             setLoading(false);
         }
@@ -100,7 +97,7 @@ export default function HomeScreen() {
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.postId}
-                renderItem={({ item }) => <PostCard {...item} />}
+                renderItem={({ item }) => <PostCard {...item} currentUserId={item.userId} />}
                 ListEmptyComponent={<Text style={styles.noPosts}>Ingen innlegg funnet.</Text>}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
@@ -122,16 +119,22 @@ type MappedPost = {
     location: string;
     clubName: string;
     color: string;
-    likes: number;
+    likes: string[];
     comments: number;
     timestamp: string;
     createdAt: Date;
+    currentUserId?: string;
 };
 
 type UserProfile = {
     _id: string;
     brukernavn: string;
     icon?: string;
+};
+
+type Klubb = {
+    _id: string;
+    navn: string;
 };
 
 const styles = StyleSheet.create({

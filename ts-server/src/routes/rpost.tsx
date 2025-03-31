@@ -69,3 +69,44 @@ postRouter.get("/:id", async (req: Request, res: Response) => {
         res.status(400).send("Ugyldig ID-format");
     }
 });
+
+// Like/unlike en post
+// @ts-ignore
+postRouter.patch("/:id/like", async (req: Request, res: Response) => {
+    try {
+        if (!collections.poster) {
+            return res.status(500).send("Database collection not initialized");
+        }
+
+        const postId = new ObjectId(req.params.id);
+        const { brukerId } = req.body;
+
+        if (!brukerId) {
+            return res.status(400).json({ error: "Mangler brukerId" });
+        }
+
+        const post = await collections.poster.findOne({ _id: postId });
+        if (!post) {
+            return res.status(404).json({ error: "Post ikke funnet" });
+        }
+
+        const harLikt = post.likes?.includes(brukerId);
+
+        if (harLikt) {
+            await collections.poster.updateOne(
+                { _id: postId },
+                { $pull: { likes: brukerId } }
+            );
+        } else {
+            await collections.poster.updateOne(
+                { _id: postId },
+                { $addToSet: { likes: brukerId } }
+            );
+        }
+
+        res.status(200).json({ message: harLikt ? "Unliket" : "Liket" });
+    } catch (error: any) {
+        console.error("❌ Feil ved like/unlike:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});

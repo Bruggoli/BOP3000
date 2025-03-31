@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -32,12 +32,14 @@ type Props = {
     location: string;
     clubName: string;
     color: string;
-    likes: number;
+    likes: string[];
     comments: number;
     timestamp: string;
+    currentUserId: string;
 };
 
 export default function PostCard({
+                                     postId,
                                      username,
                                      userAvatar,
                                      title,
@@ -48,8 +50,30 @@ export default function PostCard({
                                      likes,
                                      comments,
                                      timestamp,
+                                     currentUserId,
                                  }: Props) {
     const avatarSource = userAvatar ? avatarMap[userAvatar] : avatarMap['avatar1.png'];
+    const [localLikes, setLocalLikes] = useState<string[]>(likes);
+    const hasLiked = localLikes.includes(currentUserId);
+
+    const handleLike = async () => {
+        try {
+            await fetch(`http://10.0.2.2:3000/post/${postId}/like`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brukerId: currentUserId }),
+            });
+
+            // Oppdater lokalt
+            setLocalLikes((prevLikes) =>
+                prevLikes.includes(currentUserId)
+                    ? prevLikes.filter(id => id !== currentUserId)
+                    : [...prevLikes, currentUserId]
+            );
+        } catch (err) {
+            console.error("Kunne ikke like/unlike posten:", err);
+        }
+    };
 
     return (
         <View style={[styles.card, { backgroundColor: color }]}>
@@ -72,12 +96,14 @@ export default function PostCard({
 
             <View style={styles.iconRow}>
                 <View style={styles.iconGroup}>
-                    <FontAwesome name="star-o" size={18} color="white" />
-                    <Text style={styles.iconText}>{likes}</Text>
+                    <TouchableOpacity onPress={handleLike}>
+                        <FontAwesome name={hasLiked ? "star" : "star-o"} size={18} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.iconText}>{localLikes.length > 0 ? localLikes.length : ""}</Text>
                 </View>
                 <View style={styles.iconGroup}>
                     <FontAwesome name="comment-o" size={18} color="white" />
-                    <Text style={styles.iconText}>{comments}</Text>
+                    <Text style={styles.iconText}>{comments > 0 ? comments : ""}</Text>
                 </View>
                 <Text style={styles.clubText}>{clubName} • {location}</Text>
             </View>
