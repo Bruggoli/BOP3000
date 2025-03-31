@@ -51,7 +51,7 @@ export default function LoginScreen() {
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.loginText}>Logg inn</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/auth/register')} style={styles.link}>
+            <TouchableOpacity onPress={() => router.push('/auth/registrer')} style={styles.link}>
                 <Text style={styles.linkText}>Har du ikke en konto? Registrer deg</Text>
             </TouchableOpacity>
         </SafeAreaView>
