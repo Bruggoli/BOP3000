@@ -1,9 +1,8 @@
 import { Slot } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useColorScheme, View, StyleSheet } from 'react-native';
-import BottomMenu from '@/components/Navigation/BottomMenu';
 
-export default function RootLayout() {
+export default function AuthLayout() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
@@ -11,7 +10,6 @@ export default function RootLayout() {
         <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
             <View style={styles.container}>
                 <Slot />
-                <BottomMenu />
             </View>
         </ThemeProvider>
     );

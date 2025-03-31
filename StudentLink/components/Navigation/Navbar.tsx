@@ -48,7 +48,7 @@ export default function Navbar({ location, toggleTheme }: { location: string, to
                             <Ionicons name="document-text-outline" size={20} color="black" />
                             <Text style={styles.menuText}>Terms of Service</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/logout'); }} style={[styles.menuItem, styles.logout]}>
+                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/auth/logout'); }} style={[styles.menuItem, styles.logout]}>
                             <Ionicons name="log-out-outline" size={20} color="red" />
                             <Text style={[styles.menuText, styles.logoutText]}>Log Out</Text>
                         </TouchableOpacity>

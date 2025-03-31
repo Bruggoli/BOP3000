@@ -61,3 +61,29 @@ profilRouter.get("/:id", async (req: Request, res: Response) => {
         }
     }
 });
+
+// Oppdater profilens ikon
+// @ts-ignore
+profilRouter.patch("/:id", async (req: Request, res: Response) => {
+    try {
+        if (!collections.profiler) {
+            return res.status(500).send("Database collection not initialized");
+        }
+
+        const id = new ObjectId(req.params.id);
+        const { icon } = req.body;
+
+        const result = await collections.profiler.updateOne(
+            { _id: id },
+            { $set: { icon } }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).send("Profil ikke oppdatert");
+        }
+
+        res.status(200).json({ message: "Profil oppdatert" });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
