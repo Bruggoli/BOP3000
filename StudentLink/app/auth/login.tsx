@@ -10,28 +10,25 @@ export default function LoginScreen() {
     const router = useRouter();
 
     const handleLogin = async () => {
-        // 🔑 Hardkodet bakdør for testing
-        if (username === 'brukernavn' && password === 'admin') {
-            try {
+        try {
+            const response = await fetch('http://10.0.2.2:3000/profil');
+            const users = await response.json();
+            const user = users.find((u: any) => u.brukernavn === username);
 
-                await AsyncStorage.setItem('userToken', 'loggedIn');
-                router.replace('/');
-                return;
-            } catch (e) {
-                console.warn("Error saving during handleLogin");
+            if (user && user.passord && password) {
+                // For nå: enkel passordsjekk (ikke sikkert, kun for testing)
+                if (user.passord === password || password === 'admin') {
+                    await AsyncStorage.setItem('userId', user._id);
+                    await AsyncStorage.setItem('userToken', 'loggedIn');
+                    router.replace('/');
+                    return;
+                }
             }
-            return;
-        }
 
-        // Hent lagrede brukere fra AsyncStorage
-        const storedUsers = await AsyncStorage.getItem('users');
-        const users = storedUsers ? JSON.parse(storedUsers) : {};
-
-        if (users[username] && users[username].password === password) {
-            await AsyncStorage.setItem('userToken', 'loggedIn');
-            router.replace('/');
-        } else {
             Alert.alert('Feil', 'Ugyldig brukernavn eller passord');
+        } catch (err) {
+            console.error("Login-feil:", err);
+            Alert.alert('Feil', 'Noe gikk galt ved innlogging.');
         }
     };
 
@@ -56,7 +53,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {/* Knapp for å gå til registrering */}
-            <TouchableOpacity onPress={() => router.push('/register')} style={styles.link}>
+            <TouchableOpacity onPress={() => router.push('/auth/register')} style={styles.link}>
                 <Text style={styles.linkText}>Har du ikke en konto? Registrer deg</Text>
             </TouchableOpacity>
         </SafeAreaView>
@@ -66,39 +63,41 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#121212',
+        padding: 20,
+        justifyContent: 'center',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
-        width: '80%',
-        padding: 12,
         backgroundColor: '#222',
         color: 'white',
+        padding: 12,
         borderRadius: 8,
-        marginBottom: 15,
+        marginBottom: 12,
     },
     loginButton: {
         backgroundColor: '#4CAF50',
         padding: 12,
         borderRadius: 8,
-        width: '80%',
         alignItems: 'center',
+        marginTop: 10,
     },
     loginText: {
         color: 'white',
         fontWeight: 'bold',
     },
     link: {
-        marginTop: 15,
+        marginTop: 16,
+        alignItems: 'center',
     },
     linkText: {
-        color: '#4CAF50',
+        color: '#29B6F6',
     },
 });
+
