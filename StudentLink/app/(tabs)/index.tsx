@@ -19,17 +19,24 @@ export default function HomeScreen() {
 
     const fetchEverything = async () => {
         try {
-            const [postRes, profileRes] = await Promise.all([
+            const [postRes, profileRes, klubbRes] = await Promise.all([
                 fetch('http://10.0.2.2:3000/post'),
                 fetch('http://10.0.2.2:3000/profil'),
+                fetch('http://10.0.2.2:3000/klubb'),
             ]);
 
             const rawPosts = await postRes.json();
             const profileList: UserProfile[] = await profileRes.json();
+            const klubber = await klubbRes.json();
 
             const profileMap: Record<string, UserProfile> = {};
             for (const profile of profileList) {
                 profileMap[profile._id.toString()] = profile;
+            }
+
+            const klubbMap: Record<string, any> = {};
+            for (const klubb of klubber) {
+                klubbMap[klubb._id.toString()] = klubb;
             }
 
             const formatted = rawPosts
@@ -39,6 +46,10 @@ export default function HomeScreen() {
                     const createdAt = new Date(post.opprettet);
                     const timestamp = `${createdAt.getDate().toString().padStart(2, '0')}.${(createdAt.getMonth() + 1).toString().padStart(2, '0')} kl. ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
 
+                    const klubb = klubbMap[post.klubbId];
+                    const clubName = klubb?.navn || 'new feed';
+                    const location = post.location || klubb?.sted || 'Campus Bø';
+
                     return {
                         postId: post._id?.toString(),
                         userId: brukerIdStr,
@@ -46,12 +57,13 @@ export default function HomeScreen() {
                         userAvatar: profil?.icon || 'avatar1.png',
                         title: post.tittel,
                         text: post.innhold,
-                        location: post.location || '',
+                        location,
+                        clubName,
                         color: getColorByClub(post.klubbId),
                         likes: post.likes?.length || 0,
                         comments: post.kommentarer?.length || 0,
-                        timestamp: timestamp,
-                        createdAt: createdAt
+                        timestamp,
+                        createdAt,
                     };
                 })
                 .sort((a: MappedPost, b: MappedPost) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -59,7 +71,7 @@ export default function HomeScreen() {
             setProfiles(profileMap);
             setPosts(formatted);
         } catch (error) {
-            console.error("Feil ved lasting av poster eller profiler:", error);
+            console.error("Feil ved lasting av poster, profiler eller klubber:", error);
         } finally {
             setLoading(false);
         }
@@ -108,6 +120,7 @@ type MappedPost = {
     title: string;
     text: string;
     location: string;
+    clubName: string;
     color: string;
     likes: number;
     comments: number;
