@@ -94,7 +94,6 @@ export default function HomeScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             />
-
             <BottomMenu />
         </SafeAreaView>
     );

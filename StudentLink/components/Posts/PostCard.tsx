@@ -2,6 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../../assets/avatars/avatar1.png'),
@@ -39,6 +42,29 @@ export default function PostCard({
     const router = useRouter();
     const avatarSource = avatarMap[userAvatar] || avatarMap['avatar1.png'];
 
+    const handleReport = async () => {
+        const userId = await AsyncStorage.getItem('userId');
+        const reason = "Upassende innhold"; // Du kan utvide dette senere
+
+        try {
+            const res = await fetch("http://10.0.2.2:3000/report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ postId, reportedBy: userId, reason }),
+            });
+
+            if (res.ok) {
+                Alert.alert("Takk!", "Innlegget ble rapportert.");
+            } else {
+                Alert.alert("Feil", "Kunne ikke sende rapport.");
+            }
+        } catch (err) {
+            console.error("Rapport-feil:", err);
+            Alert.alert("Nettverksfeil", "Klarte ikke sende rapport.");
+        }
+    };
+
+
     return (
         <View style={[styles.card, { backgroundColor: color }]}>
             <View style={styles.header}>
@@ -49,7 +75,12 @@ export default function PostCard({
                 <Text style={styles.timestamp}>{timestamp}</Text>
             </View>
 
-            <Text style={styles.title}>{title}</Text>
+            <View style={styles.titleRow}>
+                <Text style={styles.title}>{title}</Text>
+                <TouchableOpacity onPress={handleReport}>
+                    <FontAwesome name="flag" size={18} color="black" />
+                </TouchableOpacity>
+            </View>
             <Text style={styles.text}>{text}</Text>
 
             <View style={styles.footer}>
@@ -67,6 +98,7 @@ export default function PostCard({
                         <Text style={styles.iconText}>{location}</Text>
                     </View>
                 )}
+
             </View>
         </View>
     );
@@ -102,6 +134,12 @@ const styles = StyleSheet.create({
     timestamp: {
         color: 'white',
         fontSize: 12,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
     },
     title: {
         fontSize: 16,

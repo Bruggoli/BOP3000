@@ -4,6 +4,7 @@ import { klubberRouter } from "./routes/rklubber";
 import { profilRouter } from "./routes/rprofil";
 import { postRouter } from "./routes/rpost";
 import { kommentarRouter } from "./routes/rkommentar";
+import { reportRouter } from "./routes/rreport";
 import connectToDb from "./services/conn";
 import bcrypt from 'bcrypt';
 import cors from 'cors';
@@ -18,6 +19,7 @@ const port = process.env.PORT || 3000;
 // Middleware for JSON-parsing
 app.use(cors());
 app.use(express.json());
+app.use("/report", reportRouter);
 
 // Koble til databasen og starte serveren
 connectToDb()
