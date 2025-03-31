@@ -19,23 +19,31 @@ export default function HomeScreen() {
 
     const fetchEverything = async () => {
         try {
-            const [postRes, profileRes] = await Promise.all([
+            const [postRes, profileRes, klubbRes] = await Promise.all([
                 fetch('http://10.0.2.2:3000/post'),
                 fetch('http://10.0.2.2:3000/profil'),
+                fetch('http://10.0.2.2:3000/klubb'),
             ]);
 
             const rawPosts = await postRes.json();
             const profileList: UserProfile[] = await profileRes.json();
+            const klubbList: Klubb[] = await klubbRes.json();
 
             const profileMap: Record<string, UserProfile> = {};
-            for (const profile of profileList) {
+            profileList.forEach(profile => {
                 profileMap[profile._id.toString()] = profile;
-            }
+            });
+
+            const klubbMap: Record<string, Klubb> = {};
+            klubbList.forEach(klubb => {
+                klubbMap[klubb._id.toString()] = klubb;
+            });
 
             const formatted = rawPosts
                 .map((post: any) => {
                     const brukerIdStr = post.brukerId?.toString();
                     const profil = profileMap[brukerIdStr];
+                    const klubb = klubbMap[post.klubbId?.toString()];
                     const createdAt = new Date(post.opprettet);
                     const timestamp = `${createdAt.getDate().toString().padStart(2, '0')}.${(createdAt.getMonth() + 1).toString().padStart(2, '0')} kl. ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
 
@@ -46,12 +54,13 @@ export default function HomeScreen() {
                         userAvatar: profil?.icon || 'avatar1.png',
                         title: post.tittel,
                         text: post.innhold,
-                        location: post.location || '',
+                        location: post.location || "Campus Bø",
+                        clubName: klubb?.navn || "New Feed",
                         color: getColorByClub(post.klubbId),
-                        likes: post.likes?.length || 0,
-                        comments: post.kommentarer?.length || 0,
+                        likes: Array.isArray(post.likes) ? post.likes : [],
+                        comments: Array.isArray(post.kommentarer) ? post.kommentarer.length : 0,
                         timestamp: timestamp,
-                        createdAt: createdAt
+                        createdAt: createdAt,
                     };
                 })
                 .sort((a: MappedPost, b: MappedPost) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -88,7 +97,7 @@ export default function HomeScreen() {
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.postId}
-                renderItem={({ item }) => <PostCard {...item} />}
+                renderItem={({ item }) => <PostCard {...item} currentUserId={item.userId} />}
                 ListEmptyComponent={<Text style={styles.noPosts}>Ingen innlegg funnet.</Text>}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
@@ -108,17 +117,24 @@ type MappedPost = {
     title: string;
     text: string;
     location: string;
+    clubName: string;
     color: string;
-    likes: number;
+    likes: string[];
     comments: number;
     timestamp: string;
     createdAt: Date;
+    currentUserId?: string;
 };
 
 type UserProfile = {
     _id: string;
     brukernavn: string;
     icon?: string;
+};
+
+type Klubb = {
+    _id: string;
+    navn: string;
 };
 
 const styles = StyleSheet.create({

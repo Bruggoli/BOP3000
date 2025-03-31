@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../../assets/avatars/avatar1.png'),
@@ -23,50 +22,90 @@ const avatarMap: Record<string, any> = {
     'avatar17.png': require('../../assets/avatars/avatar17.png'),
 };
 
+type Props = {
+    postId: string;
+    userId: string;
+    username: string;
+    userAvatar?: string;
+    title: string;
+    text: string;
+    location: string;
+    clubName: string;
+    color: string;
+    likes: string[];
+    comments: number;
+    timestamp: string;
+    currentUserId: string;
+};
+
 export default function PostCard({
                                      postId,
-                                     userId,
                                      username,
                                      userAvatar,
                                      title,
                                      text,
                                      location,
+                                     clubName,
                                      color,
                                      likes,
                                      comments,
                                      timestamp,
-                                 }: any) {
-    const router = useRouter();
-    const avatarSource = avatarMap[userAvatar] || avatarMap['avatar1.png'];
+                                     currentUserId,
+                                 }: Props) {
+    const avatarSource = userAvatar ? avatarMap[userAvatar] : avatarMap['avatar1.png'];
+    const [localLikes, setLocalLikes] = useState<string[]>(likes);
+    const hasLiked = localLikes.includes(currentUserId);
+
+    const handleLike = async () => {
+        try {
+            await fetch(`http://10.0.2.2:3000/post/${postId}/like`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brukerId: currentUserId }),
+            });
+
+            // Oppdater lokalt
+            setLocalLikes((prevLikes) =>
+                prevLikes.includes(currentUserId)
+                    ? prevLikes.filter(id => id !== currentUserId)
+                    : [...prevLikes, currentUserId]
+            );
+        } catch (err) {
+            console.error("Kunne ikke like/unlike posten:", err);
+        }
+    };
 
     return (
         <View style={[styles.card, { backgroundColor: color }]}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push(`/profile/${userId}`)} style={styles.userInfo}>
+            <View style={styles.headerRow}>
+                <View style={styles.userRow}>
                     <Image source={avatarSource} style={styles.avatar} />
                     <Text style={styles.username}>{username}</Text>
-                </TouchableOpacity>
+                </View>
                 <Text style={styles.timestamp}>{timestamp}</Text>
             </View>
 
-            <Text style={styles.title}>{title}</Text>
+            <View style={styles.titleRow}>
+                <Text style={styles.title}>{title}</Text>
+                <TouchableOpacity>
+                    <FontAwesome name="flag" size={18} color="black" />
+                </TouchableOpacity>
+            </View>
+
             <Text style={styles.text}>{text}</Text>
 
-            <View style={styles.footer}>
-                <View style={styles.iconRow}>
-                    <FontAwesome name="star-o" size={18} color="white" />
-                    <Text style={styles.iconText}>{likes}</Text>
+            <View style={styles.iconRow}>
+                <View style={styles.iconGroup}>
+                    <TouchableOpacity onPress={handleLike}>
+                        <FontAwesome name={hasLiked ? "star" : "star-o"} size={18} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.iconText}>{localLikes.length > 0 ? localLikes.length : ""}</Text>
                 </View>
-                <View style={styles.iconRow}>
+                <View style={styles.iconGroup}>
                     <FontAwesome name="comment-o" size={18} color="white" />
-                    <Text style={styles.iconText}>{comments}</Text>
+                    <Text style={styles.iconText}>{comments > 0 ? comments : ""}</Text>
                 </View>
-                {location && (
-                    <View style={styles.iconRow}>
-                        <FontAwesome name="map-marker" size={18} color="white" />
-                        <Text style={styles.iconText}>{location}</Text>
-                    </View>
-                )}
+                <Text style={styles.clubText}>{clubName} • {location}</Text>
             </View>
         </View>
     );
@@ -74,25 +113,24 @@ export default function PostCard({
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 12,
+        borderRadius: 10,
         padding: 12,
-        marginVertical: 6,
         marginHorizontal: 10,
+        marginVertical: 6,
     },
-    header: {
+    headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 4,
     },
-    userInfo: {
+    userRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     avatar: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
         marginRight: 8,
     },
     username: {
@@ -103,29 +141,39 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 12,
     },
-    title: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: 'white',
+    titleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: 4,
+    },
+    title: {
+        fontWeight: 'bold',
+        color: 'white',
+        fontSize: 16,
+        flex: 1,
     },
     text: {
         color: 'white',
-        marginBottom: 8,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        gap: 16,
+        marginBottom: 6,
     },
     iconRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 12,
+        flexWrap: 'wrap',
+        gap: 10,
+    },
+    iconGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 10,
     },
     iconText: {
         color: 'white',
         marginLeft: 4,
+    },
+    clubText: {
+        color: 'white',
+        fontSize: 12,
     },
 });
