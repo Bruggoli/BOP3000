@@ -90,7 +90,6 @@ export default function HomeScreen() {
                 contentContainerStyle={{ paddingBottom: 120 }}
                 showsVerticalScrollIndicator={false}
             />
-
             <BottomMenu />
         </SafeAreaView>
     );
