@@ -14,9 +14,14 @@ profilRouter.post("/", async (req: Request, res: Response) => {
             return res.status(500).send("Database collection not initialized");
         }
 
-        const {username, password, email } = req.body;
+        const {username, password, email, icon, medlemskap } = req.body;
+
+        if (!email.endsWith("@usn.no")) {
+            return res.status(400).json({ error: "Kun @usn.no-adresser er tillatt" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        const nyProfil: MProfil = {brukernavn: username, email, passord: hashedPassword};
+        const nyProfil: MProfil = {brukernavn: username, email, passord: hashedPassword, icon: icon || "avatar.png", medlemskap: medlemskap|| []};
 
         const resultat = await collections.profiler.insertOne(nyProfil);
 
@@ -91,3 +96,34 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// @ts-ignore
+profilRouter.post("/login", async (req: Request, res: Response) => {
+    console.log("🛂 Login request:", req.body);
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ error: "E-post og passord må fylles ut" });
+        }
+
+        const user = await collections.profiler?.findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({ error: "Ugyldig e-post eller passord" });
+        }
+
+        const isValid = await bcrypt.compare(password, user.passord);
+
+        if (!isValid) {
+            return res.status(401).json({ error: "Ugyldig e-post eller passord" });
+        }
+
+        res.status(200).json({ userId: user._id });
+    } catch (error: any) {
+        console.error("💥 Login error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
