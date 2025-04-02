@@ -5,7 +5,8 @@ export default interface MProfil {
     fNavn: string;
     eNavn: string;
     email: string;
-    passord: string; // Må hashes før lagring
+    passord: string;
     icon?: string;
-    medlemskap?: { klubbId: ObjectId; rolle: "Admin" | "Moderator" | "Medlem" }[]; // Liste over klubber brukeren er med i
+    følgerKlubber?: ObjectId[]; // 🔄 Nytt navn/felt
 }
+

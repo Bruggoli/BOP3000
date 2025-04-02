@@ -18,7 +18,7 @@ postRouter.post("/", async (req: Request, res: Response) => {
 
         const nyttPost: MPost = {
             ...req.body,
-            brukerId: req.body.brukerId, // ✅ Nå en string, ikke ObjectId
+            brukerId: req.body.brukerId, //
             opprettet: new Date(),
             likes: [],
             kommentarer: [],

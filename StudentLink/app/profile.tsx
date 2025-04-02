@@ -44,6 +44,9 @@ export default function Profile() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
+    const [followedClubs, setFollowedClubs] = useState([]);
+
+
 
     const loadProfileAndPosts = async () => {
         const id = await AsyncStorage.getItem('userId');
@@ -77,6 +80,39 @@ export default function Profile() {
             }
         }, [userId])
     );
+    useEffect(() => {
+        const fetchFollowedClubs = async () => {
+            try {
+                const brukerId = await AsyncStorage.getItem("userId");
+                if (!brukerId || brukerId.length !== 24) {
+                    console.warn("Ugyldig eller manglende brukerId:", brukerId);
+                    return;
+                }
+                const res = await fetch(`http://10.0.2.2:3000/profil/${brukerId}`);
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`Feil fra server: ${text}`);
+                }
+                const profil = await res.json();
+
+                // Hent klubbdata for hver klubbId
+                const klubbPromises = profil.følgerKlubber?.map(async (klubbId: string) => {
+                    const klubbRes = await fetch(`http://10.0.2.2:3000/klubb`);
+                    const alleKlubber = await klubbRes.json();
+                    return alleKlubber.find((k: any) => k._id === klubbId);
+                }) || [];
+
+                const klubber = await Promise.all(klubbPromises);
+                // @ts-ignore
+                setFollowedClubs(klubber.filter(Boolean)); // Fjern null/undefined
+            } catch (err) {
+                console.error("Kunne ikke hente fulgte klubber:", err);
+            }
+        };
+
+        fetchFollowedClubs();
+    }, []);
+
 
     const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
 
@@ -119,6 +155,18 @@ export default function Profile() {
                 <Text style={styles.postsLabel}>Dine innlegg:</Text>
             </View>
 
+            <Text style={styles.sectionTitle}>Klubber du følger:</Text>
+            {followedClubs.length === 0 ? (
+                <Text style={styles.emptyText}>Du følger ingen klubber ennå.</Text>
+            ) : (
+                followedClubs.map((club: any) => (
+                    <View key={club._id} style={styles.clubItem}>
+                        <Text style={styles.clubName}>• {club.navn}</Text>
+                    </View>
+                ))
+            )}
+
+
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item._id}
@@ -131,21 +179,22 @@ export default function Profile() {
                         title={item.tittel}
                         text={item.innhold}
                         location={item.location || ''}
-                        color="#444"
-                        likes={item.likes?.length || 0}
+                        color="#444" clubName={''} likes={[]} comments={0} timestamp={''} currentUserId={''}                       /*likes={item.likes?.length || 0}
                         comments={item.kommentarer?.length || 0}
                         timestamp={new Date(item.opprettet).toLocaleString('no-NO', {
                             day: '2-digit',
                             month: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit'
-                        })}
+                        })} */
                     />
                 )}
                 contentContainerStyle={styles.list}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             />
+
+
 
             <Modal visible={modalVisible} animationType="slide">
                 <SafeAreaView style={styles.modalContainer}>
@@ -233,4 +282,26 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 10,
     },
+    sectionTitle: {
+        color: 'white',
+        fontSize: 16,
+        marginTop: 15,
+        fontWeight: 'bold',
+    },
+    clubItem: {
+        backgroundColor: '#222',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 8,
+    },
+    clubName: {
+        color: 'white',
+        fontSize: 15,
+    },
+    emptyText: {
+        color: '#aaa',
+        marginBottom: 10,
+        fontStyle: 'italic',
+    }
+
 });
