@@ -80,12 +80,13 @@ postRouter.patch("/:id/like", async (req, res) => {
             return res.status(404).json({ error: "Post ikke funnet" });
         }
 
-        const harLikt = (post.likes || []).some((id: ObjectId) => id.equals(brukerId));
+        // 🔧 Sammenlign som string for å unngå .equals-feil
+        const harLikt = (post.likes || []).some((id: any) => id.toString() === brukerId.toString());
 
         if (harLikt) {
             await collections.poster.updateOne(
                 { _id: postId },
-                { $pull: { likes: brukerId as any } } // ✅ fix for TS2322
+                { $pull: { likes: brukerId as any } }
             );
         } else {
             await collections.poster.updateOne(
