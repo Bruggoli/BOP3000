@@ -23,7 +23,7 @@ export default function CreatePostScreen() {
 
         const fetchClubs = async () => {
             try {
-                const response = await fetch('http://10.0.2.2:3000/klubb');
+                const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/klubb`);
                 const data = await response.json();
                 setClubs(data);
             } catch (error) {
@@ -50,7 +50,7 @@ export default function CreatePostScreen() {
         };
 
         try {
-            const response = await fetch('http://10.0.2.2:3000/post', {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/post`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json; charset=UTF-8',

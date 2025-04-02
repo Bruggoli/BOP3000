@@ -29,7 +29,7 @@ export default function RegisterScreen() {
         };
 
         try {
-            const response = await fetch('http://10.0.2.2:3000/profil', {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/profil`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(profil),

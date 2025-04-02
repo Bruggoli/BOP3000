@@ -11,7 +11,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         try {
-            const response = await fetch('http://10.0.2.2:3000/profil');
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/profil`);
             const users = await response.json();
             const user = users.find((u: any) => u.brukernavn === username);
 

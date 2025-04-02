@@ -7,7 +7,7 @@ import {useState} from "react";
 
 export default function RootLayout() {
     // kaller på location-comp for å sjekke om permission er gitt
-    LocationComp();
+    // LocationComp();
 
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';

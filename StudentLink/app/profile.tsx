@@ -44,6 +44,7 @@ export default function Profile() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
+    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
 
     const loadProfileAndPosts = async () => {
         const id = await AsyncStorage.getItem('userId');
@@ -51,11 +52,11 @@ export default function Profile() {
         setUserId(id);
 
         try {
-            const profileRes = await fetch(`http://10.0.2.2:3000/profil/${id}`);
+            const profileRes = await fetch(`${server}/profil/${id}`);
             const profileData = await profileRes.json();
             setProfile(profileData);
 
-            const postRes = await fetch('http://10.0.2.2:3000/post');
+            const postRes = await fetch('${server}/post');
             const allPosts = await postRes.json();
             const userPosts = allPosts
                 .filter((post: Post) => post.brukerId === id)
@@ -85,7 +86,7 @@ export default function Profile() {
         console.log("Sender PATCH med ikon:", newIcon);
 
         try {
-            const res = await fetch(`http://10.0.2.2:3000/profil/${userId}`, {
+            const res = await fetch(`${server}/profil/${userId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ icon: newIcon }),

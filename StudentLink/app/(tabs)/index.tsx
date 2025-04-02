@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FlatList, StyleSheet, View, Text, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Navbar from "@/components/Navigation/Navbar";
 import BottomMenu from "@/components/Navigation/BottomMenu";
 import PostCard from "@/components/Posts/PostCard";
-import { LocationComp } from '@/components/LocationComp';
+import { LocationComp } from "@/components/LocationComp";
+import { Router, useRouter } from "expo-router";
 
 export default function HomeScreen() {
     const [posts, setPosts] = useState<MappedPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
     // @ts-ignore
-    const { location, errorMsg } = useState(LocationComp());
+    const { location, isWithin } = useState(LocationComp());
+    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
 
     useFocusEffect(
         React.useCallback(() => {
@@ -22,9 +24,13 @@ export default function HomeScreen() {
 
     const fetchEverything = async () => {
         try {
-            const [postRes, profileRes] = await Promise.all([
-                fetch(process.env.EXPO_PUBLIC_LOCALHOST + '/post'),
-                fetch(process.env.EXPO_PUBLIC_LOCALHOST + 'profil'),
+
+            const [postRes] = await Promise.all([
+                fetch(server + '/post'),
+            ]);
+
+            const [profileRes] = await Promise.all([
+                fetch(server + '/profil'),
             ]);
 
             const rawPosts = await postRes.json();
@@ -97,9 +103,9 @@ export default function HomeScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             />
-            <View style={styles.container}>
+            <View style={styles.safeContainer}>
 
-                <Text style={styles.paragraph}>{
+                <Text>{
                     // @ts-ignore
                     location !== null ? location: errorMsg
                 }</Text>
