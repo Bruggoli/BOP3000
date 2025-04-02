@@ -107,9 +107,8 @@ export default function PostCard({
                     onPress={() => router.push({ pathname: '/comments/[postId]', params: { postId } })}
                 >
                     <FontAwesome name="comment-o" size={18} color="white" />
-                    <Text style={styles.iconText}>{comments > 0 ? comments : ""}</Text>
+                    <Text style={styles.iconText}>{comments !== undefined ? comments : ""}</Text>
                 </TouchableOpacity>
-
                 <Text style={styles.clubText}>{clubName} • {location}</Text>
             </View>
         </View>
