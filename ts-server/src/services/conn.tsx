@@ -6,7 +6,7 @@ dotenv.config();
 const mongoURI = process.env.MONGO_URI || "mongodb+srv://dbAdmin:12345@cluster0.1e71y.mongodb.net/";
 const client = new MongoClient(mongoURI);
 
-export const collections: { klubber?: Collection; profiler?: Collection; poster?: Collection; kommentar?: Collection } = {};
+export const collections: { klubber?: Collection; profiler?: Collection; poster?: Collection; kommentar?: Collection; reports?: Collection } = {};
 
 export const connectToDb = async () => {
     try {
@@ -18,6 +18,8 @@ export const connectToDb = async () => {
         collections.profiler = db.collection("Profil");
         collections.poster = db.collection("Post");
         collections.kommentar = db.collection("Kommentar");
+        collections.reports = db.collection("Reports");
+
 
         console.log("Collection er satt opp!");
     } catch (error) {
