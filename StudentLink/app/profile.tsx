@@ -27,21 +27,9 @@ const avatarMap: Record<string, any> = {
     'avatar17.png': require('../assets/avatars/avatar17.png'),
 };
 
-type Post = {
-    _id: string;
-    brukerId: string;
-    tittel: string;
-    innhold: string;
-    location?: string;
-    klubbId?: string;
-    likes: any[];
-    kommentarer: any[];
-    opprettet: string;
-};
-
 export default function Profile() {
     const [profile, setProfile] = useState<any>(null);
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
     const [followedClubs, setFollowedClubs] = useState([]);
@@ -51,22 +39,74 @@ export default function Profile() {
 
 
 
+    useEffect(() => {
+        loadProfileAndPosts();
+    }, []);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (userId) {
+                loadProfileAndPosts();
+            }
+        }, [userId])
+    );
+
     const loadProfileAndPosts = async () => {
         const id = await AsyncStorage.getItem('userId');
         if (!id) return;
         setUserId(id);
 
         try {
-            const profileRes = await fetch(`http://10.0.2.2:3000/profil/${id}`);
+            const [profileRes, allPostsRes, profileListRes] = await Promise.all([
+                fetch(`http://10.0.2.2:3000/profil/${id}`),
+                fetch('http://10.0.2.2:3000/post'),
+                fetch('http://10.0.2.2:3000/profil'),
+            ]);
+
             const profileData = await profileRes.json();
+            const allPosts = await allPostsRes.json();
+            const allProfiles = await profileListRes.json();
+            const userMap: Record<string, any> = {};
+            allProfiles.forEach((p: any) => {
+                userMap[p._id] = p;
+            });
+
             setProfile(profileData);
 
-            const postRes = await fetch('http://10.0.2.2:3000/post');
-            const allPosts = await postRes.json();
-            const userPosts = allPosts
-                .filter((post: Post) => post.brukerId === id)
-                .sort((a: Post, b: Post) => new Date(b.opprettet).getTime() - new Date(a.opprettet).getTime());
-            setPosts(userPosts);
+            const userPosts = await Promise.all(
+                allPosts
+                    .filter((post: any) => post.brukerId === id)
+                    .map(async (post: any) => {
+                        const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
+                        const commentList = await commentRes.json();
+
+                        const createdAt = new Date(post.opprettet);
+
+                        return {
+                            postId: post._id,
+                            userId: post.brukerId,
+                            username: profileData?.brukernavn || 'Ukjent',
+                            userAvatar: profileData?.icon || 'avatar1.png',
+                            title: post.tittel,
+                            text: post.innhold,
+                            location: post.location || "Campus Bø",
+                            clubName: "New Feed",
+                            color: "#444",
+                            likes: Array.isArray(post.likes) ? post.likes : [],
+                            comments: commentList.length,
+                            timestamp: createdAt.toLocaleString('no-NO', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }),
+                            createdAt
+                        };
+                    })
+            );
+
+            const sorted = userPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+            setPosts(sorted);
         } catch (error) {
             console.error('Feil ved lasting av profil eller innlegg:', error);
         }
@@ -120,9 +160,6 @@ export default function Profile() {
     const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
 
     const handleAvatarChange = async (newIcon: string) => {
-        console.log("Bruker-ID:", userId);
-        console.log("Sender PATCH med ikon:", newIcon);
-
         try {
             const res = await fetch(`http://10.0.2.2:3000/profil/${userId}`, {
                 method: 'PATCH',
@@ -131,7 +168,6 @@ export default function Profile() {
             });
 
             const data = await res.json();
-            console.log("Respons fra server:", res.status, data);
 
             if (res.ok) {
                 setProfile((prev: any) => ({ ...prev, icon: newIcon }));
@@ -181,36 +217,16 @@ export default function Profile() {
             )}
 
 
-
-            {showPosts && (
-                <FlatList
-                    data={posts}
-                    keyExtractor={(item) => item._id}
-                    renderItem={({ item }) => (
-                    <PostCard
-                        postId={item._id}
-                        userId={item.brukerId}
-                        username={profile?.brukernavn || 'Ukjent'}
-                        userAvatar={profile?.icon}
-                        title={item.tittel}
-                        text={item.innhold}
-                        location={item.location || ''}
-                        color="#444" clubName={''} likes={[]} comments={0} timestamp={''} currentUserId={''}                       /*likes={item.likes?.length || 0}
-                        comments={item.kommentarer?.length || 0}
-                        timestamp={new Date(item.opprettet).toLocaleString('no-NO', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })} */
-                    />
+            <FlatList
+                data={posts}
+                keyExtractor={(item) => item.postId}
+                renderItem={({ item }) => (
+                    <PostCard {...item} currentUserId={userId} />
                 )}
                 contentContainerStyle={styles.list}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             />
-
-           )}
 
             <Modal visible={modalVisible} animationType="slide">
                 <SafeAreaView style={styles.modalContainer}>
