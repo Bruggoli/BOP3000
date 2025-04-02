@@ -32,6 +32,7 @@ export default function LoginScreen() {
             console.error("Login-feil:", JSON.stringify(err, null, 2 )) ;
             Alert.alert('Feil', 'Noe gikk galt ved innlogging.');
         }
+
     };
 
 

@@ -6,5 +6,7 @@ export default interface MProfil {
     email: string;
     passord: string; // Må hashes før lagring
     icon?: string;
+    verified?: boolean;
+    verifyToken?: string;
     medlemskap?: { klubbId: ObjectId; rolle: "Admin" | "Moderator" | "Medlem" }[]; // Liste over klubber brukeren er med i
 }

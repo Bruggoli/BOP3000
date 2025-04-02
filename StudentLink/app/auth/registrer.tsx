@@ -50,9 +50,11 @@ export default function RegisterScreen() {
                 return;
             }
 
+
             await AsyncStorage.setItem('userId', userId);
             await AsyncStorage.setItem('userToken', 'loggedIn');
-            router.replace('/');
+            Alert.alert("Suksess", "Bruker registrert! Bekreft e-posten din for å logge inn.");
+            router.replace('/auth/login');
         } catch (err) {
             console.error("Registreringsfeil:", err);
             Alert.alert('Feil', 'Kunne ikke registrere bruker.');
