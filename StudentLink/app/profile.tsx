@@ -216,7 +216,7 @@ export default function Profile() {
                 </>
             )}
 
-
+            {showPosts && (
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.postId}
@@ -227,6 +227,7 @@ export default function Profile() {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             />
+            )}
 
             <Modal visible={modalVisible} animationType="slide">
                 <SafeAreaView style={styles.modalContainer}>
