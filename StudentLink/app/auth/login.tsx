@@ -5,41 +5,46 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
 
     const handleLogin = async () => {
         try {
-            const response = await fetch('http://10.0.2.2:3000/profil');
-            const users = await response.json();
-            const user = users.find((u: any) => u.brukernavn === username);
+            const response = await fetch('http://10.0.2.2:3000/profil/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
 
-            if (user && user.passord && password) {
-                // For nå: enkel passordsjekk (ikke sikkert, kun for testing)
-                if (user.passord === password || password === 'admin') {
-                    await AsyncStorage.setItem('userId', user._id);
-                    await AsyncStorage.setItem('userToken', 'loggedIn');
-                    router.replace('/');
-                    return;
-                }
+            console.log("🔁 Status:", response.status);
+            const result = await response.json();
+            console.log("📨 Backend-respons:", result);
+
+            if (response.ok && result.userId) {
+                await AsyncStorage.setItem('userId', result.userId);
+                await AsyncStorage.setItem('userToken', 'loggedIn');
+                router.replace('/');
+            } else {
+                Alert.alert('Feil', result.error || 'Ugyldig e-post eller passord');
             }
-
-            Alert.alert('Feil', 'Ugyldig brukernavn eller passord');
         } catch (err) {
-            console.error("Login-feil:", err);
+            console.error("Login-feil:", JSON.stringify(err, null, 2 )) ;
             Alert.alert('Feil', 'Noe gikk galt ved innlogging.');
         }
+
     };
+
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Logg inn</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Brukernavn"
+                placeholder="E-postadresse"
                 placeholderTextColor="#aaa"
-                onChangeText={setUsername}
+                keyboardType={"email-address"}
+                onChangeText={setEmail}
             />
             <TextInput
                 style={styles.input}

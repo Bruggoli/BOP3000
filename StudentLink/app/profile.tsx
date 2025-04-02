@@ -143,6 +143,7 @@ export default function Profile() {
                 <Text style={styles.postsLabel}>Dine innlegg:</Text>
             </View>
 
+
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.postId}

@@ -4,8 +4,10 @@ import { klubberRouter } from "./routes/rklubber";
 import { profilRouter } from "./routes/rprofil";
 import { postRouter } from "./routes/rpost";
 import { kommentarRouter } from "./routes/rkommentar";
+import { reportRouter } from "./routes/rreport";
 import connectToDb from "./services/conn";
-
+import bcrypt from 'bcrypt';
+import cors from 'cors';
 // Last inn miljøvariabler fra .env
 dotenv.config();
 
@@ -15,7 +17,9 @@ const port = process.env.PORT || 3000;
 
 
 // Middleware for JSON-parsing
+app.use(cors());
 app.use(express.json());
+app.use("/report", reportRouter);
 
 // Koble til databasen og starte serveren
 connectToDb()
@@ -36,7 +40,7 @@ connectToDb()
 
         // @ts-ignore
         app.listen(port, '127.0.0.1', () => {
-            console.log(`🚀 Server kjører på http://0.0.0.0:${port}`);
+            console.log(`🚀 Server kjører på http://127.0.0.1:${port}`);
         });
     })
     .catch((error: Error) => {
