@@ -45,6 +45,9 @@ export default function Profile() {
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
     const [followedClubs, setFollowedClubs] = useState([]);
+    const [showClubs, setShowClubs] = useState(true);
+    const [showPosts, setShowPosts] = useState(true);
+
 
 
 
@@ -152,25 +155,38 @@ export default function Profile() {
                     <Image source={avatarSource} style={styles.avatar} />
                 </TouchableOpacity>
                 <Text style={styles.username}>Brukernavn: <Text style={{ fontWeight: 'bold' }}>{profile?.brukernavn || 'Ukjent'}</Text></Text>
-                <Text style={styles.postsLabel}>Dine innlegg:</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
+                <TouchableOpacity onPress={() => setShowClubs(!showClubs)} style={styles.toggleButton}>
+                    <Text style={styles.buttonText}>{showClubs ? 'Skjul klubber' : 'Vis klubber'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowPosts(!showPosts)} style={styles.toggleButton}>
+                    <Text style={styles.buttonText}>{showPosts ? 'Skjul innlegg' : 'Vis innlegg'}</Text>
+                </TouchableOpacity>
             </View>
 
-            <Text style={styles.sectionTitle}>Klubber du følger:</Text>
-            {followedClubs.length === 0 ? (
-                <Text style={styles.emptyText}>Du følger ingen klubber ennå.</Text>
-            ) : (
-                followedClubs.map((club: any) => (
-                    <View key={club._id} style={styles.clubItem}>
-                        <Text style={styles.clubName}>• {club.navn}</Text>
-                    </View>
-                ))
+            {showClubs && (
+                <>
+                    <Text style={styles.sectionTitle}>Klubber du følger:</Text>
+                    {followedClubs.length === 0 ? (
+                        <Text style={styles.emptyText}>Du følger ingen klubber ennå.</Text>
+                    ) : (
+                        followedClubs.map((club: any) => (
+                            <View key={club._id} style={styles.clubItem}>
+                                <Text style={styles.clubName}>• {club.navn}</Text>
+                            </View>
+                        ))
+                    )}
+                </>
             )}
 
 
-            <FlatList
-                data={posts}
-                keyExtractor={(item) => item._id}
-                renderItem={({ item }) => (
+
+            {showPosts && (
+                <FlatList
+                    data={posts}
+                    keyExtractor={(item) => item._id}
+                    renderItem={({ item }) => (
                     <PostCard
                         postId={item._id}
                         userId={item.brukerId}
@@ -194,7 +210,7 @@ export default function Profile() {
                 showsVerticalScrollIndicator={false}
             />
 
-
+           )}
 
             <Modal visible={modalVisible} animationType="slide">
                 <SafeAreaView style={styles.modalContainer}>
@@ -282,11 +298,26 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 10,
     },
+    toggleButton: {
+        backgroundColor: '#444',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
     sectionTitle: {
         color: 'white',
         fontSize: 16,
         marginTop: 15,
         fontWeight: 'bold',
+    },
+    emptyText: {
+        color: '#aaa',
+        marginBottom: 10,
+        fontStyle: 'italic',
     },
     clubItem: {
         backgroundColor: '#222',
@@ -298,10 +329,4 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 15,
     },
-    emptyText: {
-        color: '#aaa',
-        marginBottom: 10,
-        fontStyle: 'italic',
-    }
-
 });
