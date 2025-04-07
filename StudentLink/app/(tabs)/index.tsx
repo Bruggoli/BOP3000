@@ -1,117 +1,229 @@
-import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from 'react';
+import { FlatList, StyleSheet, View, Text, StatusBar, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Navbar from '@/components/Navigation/Navbar';
-import PostCard from '@/components/Posts/PostCard';
-import BottomMenu from '@/components/Navigation/BottomMenu';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Navbar from "@/components/Navigation/Navbar";
+import BottomMenu from "@/components/Navigation/BottomMenu";
+import PostCard from "@/components/Posts/PostCard";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<MappedPost[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
+    const [clubs, setClubs] = useState<Klubb[]>([]);
+    const [filter, setFilter] = useState<string | null>(null);
+    const [filterModalVisible, setFilterModalVisible] = useState(false);
+    const [followedClubs, setFollowedClubs] = useState<string[]>([]);
     const [userId, setUserId] = useState('');
-    const [profiles, setProfiles] = useState<any[]>([]);
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchEverything();
+        }, [filter])
+    );
 
-    const loadData = async () => {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        setUserId(storedUserId || '');
-
+    const fetchEverything = async () => {
+        setLoading(true);
         try {
+            const storedUserId = await AsyncStorage.getItem('userId');
+            if (!storedUserId) return;
+            setUserId(storedUserId);
+
             const [postRes, profileRes, klubbRes] = await Promise.all([
                 fetch('http://10.0.2.2:3000/post'),
                 fetch('http://10.0.2.2:3000/profil'),
                 fetch('http://10.0.2.2:3000/klubb'),
             ]);
 
-            const postList = await postRes.json();
-            const profileList = await profileRes.json();
-            const klubbList = await klubbRes.json();
+            const rawPosts = await postRes.json();
+            const profileList: UserProfile[] = await profileRes.json();
+            const klubbList: Klubb[] = await klubbRes.json();
+            setClubs(klubbList);
 
-            setProfiles(profileList);
-
-            const userMap: Record<string, any> = {};
-            profileList.forEach((u: any) => {
-                userMap[u._id] = u;
+            const profileMap: Record<string, UserProfile> = {};
+            profileList.forEach(profile => {
+                profileMap[profile._id] = profile;
             });
 
-            const klubbMap: Record<string, any> = {};
-            klubbList.forEach((k: any) => {
-                klubbMap[k._id] = k;
+            const userProfile = profileList.find(p => p._id === storedUserId);
+            const følger = userProfile?.følgerKlubber?.map((id: any) => id.toString()) || [];
+            setFollowedClubs(følger);
+
+            const klubbMap: Record<string, Klubb> = {};
+            klubbList.forEach(klubb => {
+                klubbMap[klubb._id] = klubb;
             });
 
-            const postsWithUser = await Promise.all(
-                postList.map(async (post: any) => {
-                    const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
-                    const commentList = await commentRes.json();
+            const filteredPosts = rawPosts
+                .filter((post: any) => {
+                    const klubbId = post.klubbId?.toString();
 
-                    const klubb = post.klubbId ? klubbMap[post.klubbId] : null;
-                    const isNewFeed = !post.klubbId || !klubb;
+                    if (filter === "new") {
+                        return !klubbId; // kun innlegg uten klubb
+                    }
+
+                    if (filter === null) {
+                        return !klubbId || følger.includes(klubbId); // alle fulgte + new feed
+                    }
+
+                    return klubbId === filter; // spesifikk klubb
+                })
+                .map((post: any) => {
+                    const brukerIdStr = post.brukerId?.toString();
+                    const profil = profileMap[brukerIdStr];
+                    const klubb = klubbMap[post.klubbId];
+                    const createdAt = new Date(post.opprettet);
+                    const timestamp = `${createdAt.getDate().toString().padStart(2, '0')}.${(createdAt.getMonth() + 1).toString().padStart(2, '0')} kl. ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
 
                     return {
-                        ...post,
-                        username: userMap[post.brukerId]?.brukernavn || 'Ukjent',
-                        userAvatar: userMap[post.brukerId]?.icon || 'avatar1.png',
-                        location: post.location || 'Campus Bø',
-                        clubName: klubb?.navn || 'New Feed',
-                        color: isNewFeed ? '#374151' : klubb.farge, // 🎨 Egen farge for "New Feed"
-                        timestamp: new Date(post.opprettet).toLocaleString('no-NO', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                        }),
-                        commentCount: commentList.length,
+                        postId: post._id,
+                        userId: brukerIdStr,
+                        username: profil?.brukernavn || "Ukjent",
+                        userAvatar: profil?.icon || 'avatar1.png',
+                        title: post.tittel,
+                        text: post.innhold,
+                        location: post.location || "Campus Bø",
+                        clubName: klubb?.navn || "New Feed",
+                        color: klubb?.farge || "#7f0f92",
+                        likes: post.likes || [],
+                        comments: Array.isArray(post.kommentarer) ? post.kommentarer.length : 0,
+                        timestamp,
+                        createdAt,
                     };
                 })
-            );
+                .sort((a: MappedPost, b: MappedPost) =>
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
 
-            const sorted = postsWithUser.sort((a, b) => new Date(b.opprettet).getTime() - new Date(a.opprettet).getTime());
-            setPosts(sorted);
+            setProfiles(profileMap);
+            setPosts(filteredPosts);
         } catch (err) {
-            console.error('Feil ved lasting av innlegg:', err);
+            console.error("❌ Feil ved lasting:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
+    const toggleFilterModal = () => setFilterModalVisible(!filterModalVisible);
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.safeContainer}>
+            <StatusBar barStyle="light-content" />
             <Navbar location="Hjem" toggleTheme={() => {}} />
+
+            <TouchableOpacity style={styles.filterButton} onPress={toggleFilterModal}>
+                <Ionicons name="funnel-outline" size={24} color="white" />
+                <Text style={styles.filterText}>Filter</Text>
+            </TouchableOpacity>
 
             <FlatList
                 data={posts}
-                keyExtractor={(item) => item._id}
-                renderItem={({ item }) => (
-                    <PostCard
-                        postId={item._id}
-                        userId={item.brukerId}
-                        username={item.username}
-                        userAvatar={item.userAvatar}
-                        title={item.tittel}
-                        text={item.innhold}
-                        location={item.location}
-                        clubName={item.clubName}
-                        color={item.color}
-                        likes={item.likes || []}
-                        comments={item.commentCount}
-                        timestamp={item.timestamp}
-                        currentUserId={userId}
-                    />
-                )}
-                contentContainerStyle={{ paddingBottom: 120 }}
+                keyExtractor={(item) => item.postId}
+                renderItem={({ item }) => <PostCard {...item} currentUserId={userId} />}
+                ListEmptyComponent={<Text style={styles.noPosts}>Ingen innlegg funnet.</Text>}
+                contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             />
+
+            <Modal visible={filterModalVisible} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity onPress={() => { setFilter(null); toggleFilterModal(); }}>
+                            <Text style={styles.modalItem}>Alle innlegg</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => { setFilter("new"); toggleFilterModal(); }}>
+                            <Text style={styles.modalItem}>New Feed</Text>
+                        </TouchableOpacity>
+                        {clubs
+                            .filter(c => followedClubs.includes(c._id))
+                            .map(club => (
+                                <TouchableOpacity key={club._id} onPress={() => { setFilter(club._id); toggleFilterModal(); }}>
+                                    <Text style={styles.modalItem}>{club.navn}</Text>
+                                </TouchableOpacity>
+                            ))}
+                    </View>
+                </View>
+            </Modal>
 
             <BottomMenu />
         </SafeAreaView>
     );
 }
 
-//@ts-ignore
+type MappedPost = {
+    postId: string;
+    userId: string;
+    username: string;
+    userAvatar?: string;
+    title: string;
+    text: string;
+    location: string;
+    clubName: string;
+    color: string;
+    likes: string[];
+    comments: number;
+    timestamp: string;
+    createdAt: Date;
+};
+
+type UserProfile = {
+    _id: string;
+    brukernavn: string;
+    icon?: string;
+    følgerKlubber?: string[];
+};
+
+type Klubb = {
+    _id: string;
+    navn: string;
+    farge?: string;
+};
+
 const styles = StyleSheet.create({
-    container: {
+    safeContainer: {
         flex: 1,
         backgroundColor: '#121212',
+    },
+    list: {
+        paddingBottom: 80,
+    },
+    noPosts: {
+        textAlign: 'center',
+        color: 'white',
+        marginTop: 20,
+    },
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#333',
+        padding: 10,
+        margin: 10,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+    },
+    filterText: {
+        color: 'white',
+        marginLeft: 8,
+        fontSize: 16,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#121212', // svart bakgrunn
+        padding: 20,
+        borderRadius: 10,
+        width: '80%',
+    },
+    modalItem: {
+        fontSize: 16,
+        paddingVertical: 10,
+        color: 'white', // hvit tekst
     },
 });

@@ -6,8 +6,16 @@ import ClubItem from '@/components/ClubItem';
 import BottomMenu from "@/components/Navigation/BottomMenu";
 import Navbar from "@/components/Navigation/Navbar";
 
+// 👉 Definer typen for klubbene
+type Club = {
+    _id: string;
+    navn: string;
+    beskrivelse: string;
+    farge?: string;
+};
+
 export default function ClubsScreen() {
-    const [clubs, setClubs] = useState([]);
+    const [clubs, setClubs] = useState<Club[]>([]); // ✅ Bruk type her
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
@@ -19,7 +27,7 @@ export default function ClubsScreen() {
     const fetchClubs = async (query = "") => {
         try {
             setLoading(true);
-            const response    = await fetch(`http://10.0.2.2:3000/klubb?q=${query}`);
+            const response = await fetch(`http://10.0.2.2:3000/klubb?q=${query}`);
             const data = await response.json();
             setClubs(data);
         } catch (error) {
@@ -52,18 +60,18 @@ export default function ClubsScreen() {
                 <Text style={styles.buttonText}>Lag ny Klubb</Text>
             </TouchableOpacity>
 
-
-            <View style={styles.clubBox}>
-                {loading ? (
-                    <ActivityIndicator size="large" color="white" />
-                ) : (
-                    <FlatList
-                        data={clubs}
-                        keyExtractor={(item) => item._id}
-                        renderItem={({ item }) => <ClubItem club={item} />}
-                    />
-                )}
-            </View>
+            {/* Klubbliste */}
+            {loading ? (
+                <ActivityIndicator size="large" color="white" />
+            ) : (
+                <FlatList
+                    data={clubs}
+                    keyExtractor={(item) => item._id}
+                    renderItem={({ item }) => <ClubItem club={item} />}
+                    contentContainerStyle={styles.clubBox}
+                    showsVerticalScrollIndicator={false}
+                />
+            )}
 
             <BottomMenu />
         </SafeAreaView>
@@ -98,11 +106,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#222',
         borderRadius: 12,
         padding: 15,
-        marginTop: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
+        paddingBottom: 120,
     },
 });
