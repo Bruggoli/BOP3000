@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import ModelsProfil from "../models/modelsProfil";
+import MProfil from "../models/mProfil";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
@@ -25,7 +25,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const verifyToken = crypto.randomBytes(32).toString("hex");
 
-        const nyProfil: ModelsProfil = {
+        const nyProfil: MProfil = {
             brukernavn: username,
             email,
             passord: hashedPassword,
@@ -44,6 +44,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS,
             },
+            secure: true,
         });
 
         const verifyLink = `http://localhost:3000/profil/verify/${verifyToken}`;
@@ -137,74 +138,28 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
 
 // Hent en spesifikk profil basert på ID
 // @ts-ignore
-// Hent bruker basert på e-post (for innlogging)
-// @ts-ignore
-profilRouter.post("/login", async (req: Request, res: Response) => {
+profilRouter.get("/:id", async (req: Request, res: Response) => {
     try {
         if (!collections.profiler) {
-            return res.status(500).send("Database collection ikke initialisert");
-        }
-
-        const { email, passord } = req.body;
-        if (!email || !passord) {
-            return res.status(400).send("Mangler e-post eller passord");
-        }
-
-        const bruker = await collections.profiler.findOne({ email });
-
-        if (!bruker) {
-            return res.status(404).send("Bruker ikke funnet");
-        }
-
-        // Her burde du egentlig hashe passordet og sammenligne, men vi gjør en enkel sammenligning nå:
-        if (bruker.passord !== passord) {
-            return res.status(401).send("Feil passord");
-        }
-
-        res.status(200).json(bruker);
-    } catch (error) {
-        res.status(500).send("Feil ved innlogging");
-    }
-});
-
-
-// sletter bruker
-// @ts-ignore
-profilRouter.delete("/:id", async (req: Request, res: Response) => {
-    try {
-        if (!collections.profiler || !collections.kommentar) {
             return res.status(500).send("Database collection ikke tilgjengelig");
         }
 
         const id = new ObjectId(req.params.id);
+        const profil = await collections.profiler.findOne({ _id: id });
 
-        const slettKommentarer = req.query.slettKommentarer === "true";
-        const slettPoster = req.query.slettPoster === "true";
-
-        // Slett kommentarer hvis flagg er satt
-        if (slettKommentarer) {
-            await collections.kommentar.deleteMany({ brukerId: id });
+        if (!profil) {
+            return res.status(404).send("Profil ikke funnet");
         }
 
-        const resultat = await collections.profiler.deleteOne({ _id: id });
-
-        if (resultat.deletedCount === 0) {
-            return res.status(404).send("Fant ikke bruker å slette.");
-        }
-        if (slettKommentarer && collections.kommentar) {
-            await collections.kommentar.deleteMany({ brukerId: id });
-        }
-
-        if (slettPoster && collections.poster) {
-            await collections.poster.deleteMany({ brukerId: id });
-        }
-
-        res.status(200).send("Bruker (og evt. kommentarer) slettet.");
+        res.status(200).json(profil);
     } catch (error) {
-        res.status(500).send("Noe gikk galt ved sletting.");
+        if (error instanceof Error) {
+            res.status(400).send("Ugyldig ID-format");
+        } else {
+            res.status(500).send("Ukjent feil");
+        }
     }
 });
-
 
 // Oppdater profilens ikon
 // @ts-ignore
@@ -229,28 +184,6 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
         res.status(200).json({ message: "Profil oppdatert" });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
-    }
-});
-
-// Slett en profil
-// @ts-ignore
-profilRouter.delete("/:id", async (req: Request, res: Response) => {
-    try {
-        if (!collections.profiler) {
-            return res.status(500).send("Database collection ikke tilgjengelig");
-        }
-
-        const id = new ObjectId(req.params.id);
-
-        const resultat = await collections.profiler.deleteOne({ _id: id });
-
-        if (resultat.deletedCount === 0) {
-            return res.status(404).send("Fant ikke bruker å slette.");
-        }
-
-        res.status(200).send("Bruker slettet.");
-    } catch (error) {
-        res.status(500).send("Noe gikk galt ved sletting.");
     }
 });
 
