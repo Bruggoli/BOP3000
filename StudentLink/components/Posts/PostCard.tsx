@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
-
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../../assets/avatars/avatar1.png'),
@@ -79,69 +76,43 @@ export default function PostCard({
         }
     };
 
-    const handleReport = async () => {
-        const userId = await AsyncStorage.getItem('userId');
-        const reason = "Upassende innhold"; // Du kan utvide dette senere
-
-        try {
-            const res = await fetch("http://10.0.2.2:3000/report", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ postId, reportedBy: userId, reason }),
-            });
-
-            if (res.ok) {
-                Alert.alert("Takk!", "Innlegget ble rapportert.");
-            } else {
-                Alert.alert("Feil", "Kunne ikke sende rapport.");
-            }
-        } catch (err) {
-            console.error("Rapport-feil:", err);
-            Alert.alert("Nettverksfeil", "Klarte ikke sende rapport.");
-        }
-    };
-
-
-    return <View style={[styles.card, { backgroundColor: color }]}>
-        <View style={styles.headerRow}>
-            <View style={styles.userRow}>
-                <Image source={avatarSource} style={styles.avatar} />
-                <Text style={styles.username}>{username}</Text>
+    return (
+        <View style={[styles.card, { backgroundColor: color }]}>
+            <View style={styles.headerRow}>
+                <View style={styles.userRow}>
+                    <Image source={avatarSource} style={styles.avatar} />
+                    <Text style={styles.username}>{username}</Text>
+                </View>
+                <Text style={styles.timestamp}>{timestamp}</Text>
             </View>
-            <Text style={styles.timestamp}>{timestamp}</Text>
-        </View>
 
-        <View style={styles.titleRow}>
-            <Text style={styles.title}>{title}</Text>
-            <TouchableOpacity onPress={handleReport}>
-                <FontAwesome name="flag" size={18} color="black" />
-            </TouchableOpacity>
-        </View>
-        <Text style={styles.text}>{text}</Text>
-
-        <View style={styles.iconRow}>
-            <View style={styles.iconGroup}>
-                <TouchableOpacity onPress={handleLike}>
-                    <FontAwesome name={hasLiked ? "star" : "star-o"} size={18} color="white" />
+            <View style={styles.titleRow}>
+                <Text style={styles.title}>{title}</Text>
+                <TouchableOpacity>
+                    <FontAwesome name="flag" size={18} color="black" />
                 </TouchableOpacity>
-                <Text style={styles.iconText}>{localLikes.length > 0 ? localLikes.length : ""}</Text>
             </View>
-            <TouchableOpacity
-                style={styles.iconGroup}
-                onPress={() => router.push(`/comments/${postId}`)}
-            >
-                <FontAwesome name="comment-o" size={18} color="white" />
-                <Text style={styles.iconText}>{comments !== undefined ? comments : ""}</Text>
-            </TouchableOpacity>
-            <Text style={styles.clubText}>{clubName} • {location}</Text>
-                <Text style={styles.iconText}>{comments}</Text>
-            </View>
-            {location && <View style={styles.iconRow}>
-                    <FontAwesome name="map-marker" size={18} color="white" />
-                    <Text style={styles.iconText}>{location}</Text>
-                </View>}
 
-        </View>;
+            <Text style={styles.text}>{text}</Text>
+
+            <View style={styles.iconRow}>
+                <View style={styles.iconGroup}>
+                    <TouchableOpacity onPress={handleLike}>
+                        <FontAwesome name={hasLiked ? "star" : "star-o"} size={18} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.iconText}>{localLikes.length > 0 ? localLikes.length : ""}</Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.iconGroup}
+                    onPress={() => router.push({ pathname: '/comments/[postId]', params: { postId } })}
+                >
+                    <FontAwesome name="comment-o" size={18} color="white" />
+                    <Text style={styles.iconText}>{comments !== undefined ? comments : ""}</Text>
+                </TouchableOpacity>
+                <Text style={styles.clubText}>{clubName} • {location}</Text>
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({

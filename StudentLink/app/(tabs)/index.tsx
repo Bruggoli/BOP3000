@@ -70,7 +70,7 @@ export default function HomeScreen() {
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item._id}
-                renderItem={({ item }) => (
+                renderItem={({item}) => (
                     <PostCard
                         postId={item._id}
                         userId={item.brukerId}
@@ -87,14 +87,16 @@ export default function HomeScreen() {
                         currentUserId={userId}
                     />
                 )}
-                contentContainerStyle={{ paddingBottom: 120 }}
+                contentContainerStyle={{paddingBottom: 120}}
                 showsVerticalScrollIndicator={false}
             />
-            <BottomMenu />
+
+            <BottomMenu/>
         </SafeAreaView>
     );
 }
 
+//@ts-ignore
 const styles = StyleSheet.create({
     container: {
         flex: 1,
