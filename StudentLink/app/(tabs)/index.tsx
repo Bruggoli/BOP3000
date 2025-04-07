@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import { View, FlatList, StyleSheet, Text} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -42,7 +42,7 @@ export default function HomeScreen() {
 
             const postsWithUser = await Promise.all(
                 postList.map(async (post: any) => {
-                    const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
+                    const commentRes = await fetch(`${server}/post/${post._id}`);
                     const commentList = await commentRes.json();
 
                     return {
@@ -96,13 +96,11 @@ export default function HomeScreen() {
                 contentContainerStyle={{paddingBottom: 120}}
                 showsVerticalScrollIndicator={false}
             />
-            <View style={styles.safeContainer}>
 
                 <Text>{
                     // @ts-ignore
                     location !== null ? location: errorMsg
                 }</Text>
-            </View>
 
             {/* BottomMenu */}
             <BottomMenu />
