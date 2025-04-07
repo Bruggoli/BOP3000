@@ -4,8 +4,10 @@ import { klubberRouter } from "./routes/rklubber";
 import { profilRouter } from "./routes/rprofil";
 import { postRouter } from "./routes/rpost";
 import { kommentarRouter } from "./routes/rkommentar";
+import { reportRouter } from "./routes/rreport";
 import connectToDb from "./services/conn";
-
+import bcrypt from 'bcrypt';
+import cors from 'cors';
 // Last inn miljøvariabler fra .env
 dotenv.config();
 
@@ -15,7 +17,9 @@ const server = process.env.LOCALHOST;
 
 
 // Middleware for JSON-parsing
+app.use(cors());
 app.use(express.json());
+app.use("/report", reportRouter);
 
 // Koble til databasen og starte serveren
 connectToDb()

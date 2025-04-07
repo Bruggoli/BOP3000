@@ -43,9 +43,10 @@ export default function CreateKlubb() {
             setDescription('');
             router.replace('/clubs'); // Naviger tilbake til klubboversikten
         } catch (error) {
-
-            console.error('Feil ved oppretting av klubb:', (error as Error).message);
-            Alert.alert('Feil', (error as Error).message);
+            // @ts-ignore
+            console.error('Feil ved oppretting av klubb:', error.message);
+            // @ts-ignore
+            Alert.alert('Feil', error.message);
         }
     };
 

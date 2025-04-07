@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ClubItem({ club }: { club: any }) {
     const [expanded, setExpanded] = useState(false);
@@ -9,19 +10,70 @@ export default function ClubItem({ club }: { club: any }) {
         setExpanded(!expanded);
     };
 
-    const handleJoinClub = async () => {
-        // Her skal API-kall gjøres senere
-        // await axios.post(`https://your-api-url.com/clubs/${club._id}/join`);
-        setIsMember(true);
-        Alert.alert('Suksess', `Du har sendt en forespørsel om å bli med i ${club.navn}.`);
+    const handleFollowClub = async () => {
+        try {
+            const brukerId = await AsyncStorage.getItem("userId");
+            if (!brukerId || brukerId.length !== 24) {
+                Alert.alert("Feil", "Ugyldig eller manglende bruker-ID");
+                return;
+            }
+            console.log("🔍 Forsøker å følge klubb", club._id, "med bruker", brukerId);
+            const response = await fetch("http://10.0.2.2:3000/klubb/folg", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brukerId, klubbId: club._id }),
+            });
+            const responseText = await response.text(); // ⬅️ legg til denne
+            console.log("📩 Backend svarte:", response.status, responseText);
+
+
+            if (!response.ok) throw new Error(await response.text());
+            setIsMember(true);
+            Alert.alert("Suksess", `Du følger nå ${club.navn}`);
+        } catch (error) {
+            Alert.alert("Feil", "Kunne ikke følge klubben");
+        }
     };
 
-    const handleLeaveClub = async () => {
-        // Her skal API-kall gjøres senere
-        // await axios.post(`https://your-api-url.com/clubs/${club._id}/leave`);
-        setIsMember(false);
-        Alert.alert('Suksess', `Du har forlatt ${club.navn}.`);
+
+    const handleUnfollowClub = async () => {
+        try {
+            const brukerId = await AsyncStorage.getItem("userId");
+            if (!brukerId) {
+                Alert.alert("Feil", "Fant ikke bruker-ID");
+                return;
+            }
+
+            const response = await fetch("http://10.0.2.2:3000/klubb/sluttfolg", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brukerId, klubbId: club._id }),
+            });
+
+            const text = await response.text();
+            console.log("🛑 Unfollow-respons:", response.status, text);
+
+            if (!response.ok) throw new Error(text);
+
+            setIsMember(false);
+            Alert.alert("Suksess", `Du har sluttet å følge ${club.navn}`);
+        } catch (error) {
+            Alert.alert("Feil", "Kunne ikke slutte å følge klubben");
+        }
     };
+
+    useEffect(() => {
+        const checkMembership = async () => {
+            const brukerId = await AsyncStorage.getItem("userId");
+            if (!brukerId || !club?.følgere) return;
+
+            const følger = club.følgere.some((id: string) => id === brukerId);
+            setIsMember(følger);
+        };
+
+        checkMembership();
+    }, [club]);
+
 
     return (
         <TouchableOpacity style={styles.clubContainer} onPress={toggleExpand}>
@@ -33,14 +85,15 @@ export default function ClubItem({ club }: { club: any }) {
                     <Text style={styles.clubAdmin}>Admin: {club.admin}</Text>
 
                     {isMember ? (
-                        <TouchableOpacity style={styles.leaveButton} onPress={handleLeaveClub}>
-                            <Text style={styles.buttonText}>Forlat klubben</Text>
+                        <TouchableOpacity style={styles.leaveButton} onPress={handleUnfollowClub}>
+                            <Text style={styles.buttonText}>Slutt å følge</Text>
                         </TouchableOpacity>
                     ) : (
-                        <TouchableOpacity style={styles.joinButton} onPress={handleJoinClub}>
-                            <Text style={styles.buttonText}>Send Join Request</Text>
+                        <TouchableOpacity style={styles.joinButton} onPress={handleFollowClub}>
+                            <Text style={styles.buttonText}>Følg klubb</Text>
                         </TouchableOpacity>
                     )}
+
                 </View>
             )}
         </TouchableOpacity>

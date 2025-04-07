@@ -57,51 +57,85 @@ klubberRouter.post("/", async (req: Request, res: Response) => {
     }
 });
 
-
-
-// Bli med i en klubb
+// Følg en klubb
 // @ts-ignore
-klubberRouter.post("/join", async (req: Request, res: Response) => {
+klubberRouter.post("/folg", async (req, res) => {
+
     try {
-        if (!collections.klubber || !collections.profiler) {
-            return res.status(500).send("Database collection not initialized");
-        }
-
         const { brukerId, klubbId } = req.body;
+        console.log("📥 Følg forespørsel mottatt:", { brukerId, klubbId });
 
-        if (!brukerId || !klubbId) {
-            return res.status(400).send("Mangler brukerId eller klubbId");
+        if (!brukerId || !klubbId) return res.status(400).send("Mangler brukerId eller klubbId");
+        if (!ObjectId.isValid(brukerId) || !ObjectId.isValid(klubbId)) {
+            return res.status(400).send("Ugyldig ID-format");
         }
 
-        const klubbObjectId = new ObjectId(klubbId);
         const brukerObjectId = new ObjectId(brukerId);
+        const klubbObjectId = new ObjectId(klubbId);
 
-        // Finn klubben
-        const klubb = await collections.klubber.findOne({ _id: klubbObjectId });
-        if (!klubb) {
-            return res.status(404).send("Klubb ikke funnet");
-        }
+        const klubb = await collections.klubber?.findOne({ _id: klubbObjectId });
+        const bruker = await collections.profiler?.findOne({ _id: brukerObjectId });
 
-        // Sjekk om brukeren allerede er medlem
-        const alleredeMedlem = klubb.medlemmer.some((m: any) => m.brukerId.equals(brukerObjectId));
-        if (alleredeMedlem) {
-            return res.status(400).send("Bruker er allerede medlem av klubben");
-        }
+        if (!klubb) return res.status(404).send("Klubb ikke funnet");
+        if (!bruker) return res.status(404).send("Bruker ikke funnet");
 
-        // Legg til brukeren i klubbens medlemsliste
-        await collections.klubber.updateOne(
+        // 🔎 Logg før oppdatering
+        console.log("➡️ Oppdaterer klubbens følgere...");
+        const klubbUpdate = await collections.klubber?.updateOne(
             { _id: klubbObjectId },
-            { $push: { medlemmer: { brukerId: brukerObjectId, rolle: "Medlem" } } as any }
+            { $addToSet: { følgere: brukerObjectId } }
         );
+        console.log("📦 klubbUpdate:", klubbUpdate);
 
-        // Legg til klubben i brukerens medlemskap
-        await collections.profiler.updateOne(
+        console.log("➡️ Oppdaterer brukerens følgerKlubber...");
+        const brukerUpdate = await collections.profiler?.updateOne(
             { _id: brukerObjectId },
-            { $push: { medlemskap: { klubbId: klubbObjectId, rolle: "Medlem" } } as any }
+            { $addToSet: { følgerKlubber: klubbObjectId } }
         );
+        console.log("📦 brukerUpdate:", brukerUpdate);
 
-        res.status(200).send("✅ Bruker har blitt med i klubben!");
-    } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        // 🔐 Sjekk for modifiedCount
+        if (klubbUpdate?.modifiedCount === 0 && brukerUpdate?.modifiedCount === 0) {
+            return res.status(500).send("Ingen dokumenter ble oppdatert");
+        }
+
+        console.log(`✅ ${brukerId} følger nå ${klubbId}`);
+        res.status(200).send("✅ Nå følger du klubben");
+    } catch (error: any) {
+        console.error("❌ Feil i /følg:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
+
+
+
+// Slutt å følge
+// @ts-ignore
+klubberRouter.post("/sluttfolg", async (req: Request, res: Response) => {
+    try {
+        const { brukerId, klubbId } = req.body;
+
+        if (!ObjectId.isValid(brukerId) || !ObjectId.isValid(klubbId)) {
+            return res.status(400).send("Ugyldig ID-format");
+        }
+
+        const brukerObjectId = new ObjectId(brukerId);
+        const klubbObjectId = new ObjectId(klubbId);
+
+        await collections.klubber?.updateOne(
+            { _id: klubbObjectId },
+            { $pull: { følgere: brukerObjectId } as any}
+        );
+
+        await collections.profiler?.updateOne(
+            { _id: brukerObjectId },
+            { $pull: { følgerKlubber: klubbObjectId } as any}
+        );
+
+        res.status(200).send("🚫 Du følger ikke lenger klubben");
+    } catch (error: any) {
+        console.error("❌ Feil i /sluttfolg:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+

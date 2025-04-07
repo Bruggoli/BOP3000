@@ -6,6 +6,7 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import Navbar from '@/components/Navigation/Navbar';
+import {router} from "expo-router";
 
 export default function CreatePostScreen() {
     const [title, setTitle] = useState('');
@@ -63,6 +64,7 @@ export default function CreatePostScreen() {
                 setTitle('');
                 setContent('');
                 setSelectedClub('');
+                router.replace('/'); // 🚀 Naviger til index
             } else {
                 Alert.alert('Feil', 'Kunne ikke opprette innlegget.');
             }
@@ -71,6 +73,7 @@ export default function CreatePostScreen() {
             Alert.alert('Feil', 'Noe gikk galt ved oppretting.');
         }
     };
+
 
     return (
         <SafeAreaView style={styles.container}>

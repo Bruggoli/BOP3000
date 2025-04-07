@@ -6,13 +6,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen() {
     const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const router = useRouter();
 
     const handleRegister = async () => {
-        if (!username || !password || !confirmPassword) {
+        if (!username || !email || !password || !confirmPassword) {
             Alert.alert('Feil', 'Alle felt må fylles ut');
+            return;
+        }
+
+        if (!email.endsWith('@usn.no')) {
+            Alert.alert('Feil', 'Du må bruke en @usn.no e-postadresse');
             return;
         }
 
@@ -22,8 +28,9 @@ export default function RegisterScreen() {
         }
 
         const profil = {
-            brukernavn: username,
-            passord: password,
+            username,
+            email,
+            password,
             icon: 'https://your-api.com/avatars/avatar1.png',
             medlemskap: [],
         };
@@ -38,9 +45,16 @@ export default function RegisterScreen() {
             const result = await response.json();
             const userId = result.id;
 
+            if (!userId) {
+                Alert.alert("Feil", "Bruker-ID mangler i respons");
+                return;
+            }
+
+
             await AsyncStorage.setItem('userId', userId);
             await AsyncStorage.setItem('userToken', 'loggedIn');
-            router.replace('/');
+            Alert.alert("Suksess", "Bruker registrert! Bekreft e-posten din for å logge inn.");
+            router.replace('/auth/login');
         } catch (err) {
             console.error("Registreringsfeil:", err);
             Alert.alert('Feil', 'Kunne ikke registrere bruker.');
@@ -55,6 +69,13 @@ export default function RegisterScreen() {
                 placeholder="Brukernavn"
                 placeholderTextColor="#aaa"
                 onChangeText={setUsername}
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="E-postadresse (@usn.no)"
+                placeholderTextColor="#aaa"
+                keyboardType="email-address"
+                onChangeText={setEmail}
             />
             <TextInput
                 style={styles.input}
