@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-export default interface MProfil {
+export default interface ModelsProfil {
     _id?: ObjectId;
     brukernavn: string;
     email: string;

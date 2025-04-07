@@ -1,10 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { klubberRouter } from "./routes/rklubber";
-import { profilRouter } from "./routes/rprofil";
-import { postRouter } from "./routes/rpost";
-import { kommentarRouter } from "./routes/rkommentar";
-import { reportRouter } from "./routes/rreport";
+import { klubberRouter } from "./routes/routesklubber";
+import { profilRouter } from "./routes/routesprofil";
+import { postRouter } from "./routes/routespost";
+import { kommentarRouter } from "./routes/routeskommentar";
+import { reportRouter } from "./routes/routesreport";
 import connectToDb from "./services/conn";
 import bcrypt from 'bcrypt';
 import cors from 'cors';

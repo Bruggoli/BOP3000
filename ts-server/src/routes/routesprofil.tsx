@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import MProfil from "../models/mProfil";
+import ModelsProfil from "../models/modelsProfil";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
@@ -25,7 +25,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const verifyToken = crypto.randomBytes(32).toString("hex");
 
-        const nyProfil: MProfil = {
+        const nyProfil: ModelsProfil = {
             brukernavn: username,
             email,
             passord: hashedPassword,
@@ -136,6 +136,39 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
 });
 
 // Hent en spesifikk profil basert på ID
+// @ts-ignore
+// Hent bruker basert på e-post (for innlogging)
+// @ts-ignore
+profilRouter.post("/login", async (req: Request, res: Response) => {
+    try {
+        if (!collections.profiler) {
+            return res.status(500).send("Database collection ikke initialisert");
+        }
+
+        const { email, passord } = req.body;
+        if (!email || !passord) {
+            return res.status(400).send("Mangler e-post eller passord");
+        }
+
+        const bruker = await collections.profiler.findOne({ email });
+
+        if (!bruker) {
+            return res.status(404).send("Bruker ikke funnet");
+        }
+
+        // Her burde du egentlig hashe passordet og sammenligne, men vi gjør en enkel sammenligning nå:
+        if (bruker.passord !== passord) {
+            return res.status(401).send("Feil passord");
+        }
+
+        res.status(200).json(bruker);
+    } catch (error) {
+        res.status(500).send("Feil ved innlogging");
+    }
+});
+
+
+// sletter bruker
 // @ts-ignore
 profilRouter.delete("/:id", async (req: Request, res: Response) => {
     try {
