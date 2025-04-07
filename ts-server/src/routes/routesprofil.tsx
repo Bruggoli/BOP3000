@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import ModelsProfil from "../models/modelsProfil";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -135,10 +136,11 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
         res.status(500).send(error.message);
     }
 });
-
++
 // Hent bruker basert på e-post (for innlogging)
 // @ts-ignore
 profilRouter.post("/login", async (req: Request, res: Response) => {
+
     try {
         if (!collections.profiler) {
             return res.status(500).send("Database collection ikke initialisert");
@@ -167,7 +169,7 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
 });
 
 
-// sletter bruker
+// Hent bruker basert på ID
 // @ts-ignore
 profilRouter.get("/:id", async (req: Request, res: Response) => {
     try {
@@ -190,6 +192,7 @@ profilRouter.get("/:id", async (req: Request, res: Response) => {
             res.status(500).send("Ukjent feil");
         }
     }
+
 });
 
 
@@ -219,27 +222,57 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
     }
 });
 
-// Slett en profil
 // @ts-ignore
+// Slett en brukerprofil og relaterte data
 profilRouter.delete("/:id", async (req: Request, res: Response) => {
     try {
-        if (!collections.profiler) {
-            return res.status(500).send("Database collection ikke tilgjengelig");
-        }
+        const { profiler, kommentar, poster, klubber } = collections;
+
+        if (!profiler) return res.status(500).send("Profil-collection ikke tilgjengelig");
 
         const id = new ObjectId(req.params.id);
+        const slettKommentarer = req.query.slettKommentarer === "true";
+        const slettPoster = req.query.slettPoster === "true";
 
-        const resultat = await collections.profiler.deleteOne({ _id: id });
+        // Slett kommentarer
+        if (slettKommentarer && kommentar) {
+            await kommentar.deleteMany({ brukerId: id });
+        }
+
+        // Slett poster
+        if (slettPoster && poster) {
+            await poster.deleteMany({ brukerId: id });
+        }
+
+        // Fjern bruker fra klubb-medlemskap
+        if (klubber) {
+            // Fjern fra medlemslisten
+            await klubber.updateMany(
+                { "medlemmer.brukerId": id },
+                { $pull: { medlemmer: { brukerId: id } } as any }
+            );
+
+            // Fjern admin-feltet hvis bruker var admin
+            await klubber.updateMany(
+                { admin: id },
+                { $unset: { admin: "" } }
+            );
+        }
+
+        // Slett selve profilen
+        const resultat = await profiler.deleteOne({ _id: id });
 
         if (resultat.deletedCount === 0) {
             return res.status(404).send("Fant ikke bruker å slette.");
         }
 
-        res.status(200).send("Bruker slettet.");
+        res.status(200).send("✅ Bruker og valgte data slettet.");
     } catch (error) {
-        res.status(500).send("Noe gikk galt ved sletting.");
+        console.error("Feil ved sletting:", error);
+        res.status(500).send("Noe gikk galt ved sletting av bruker.");
     }
 });
+
 
 // Login med sjekk av verifisering
 // @ts-ignore

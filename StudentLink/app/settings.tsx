@@ -16,6 +16,7 @@ export default function SettingsScreen() {
     const [slettPoster, setSlettPoster] = useState(false);
 
 
+
     useEffect(() => {
         const loadSettings = async () => {
             const storedUsername = await AsyncStorage.getItem('username');
@@ -57,33 +58,6 @@ export default function SettingsScreen() {
         setSlettPoster(false);
     };
 
-
-    const confirmDelete = async (valg: { kommentarer: boolean; poster: boolean }) => {
-        try {
-            const userId = await AsyncStorage.getItem('userId');
-            if (!userId) return;
-
-            const query = new URLSearchParams();
-            if (valg.kommentarer) query.append('slettKommentarer', 'true');
-            if (valg.poster) query.append('slettPoster', 'true');
-
-            const res = await fetch(`http://10.0.2.2:3000/profil/${userId}?${query.toString()}`, {
-                method: 'DELETE',
-            });
-
-            if (res.ok) {
-                await AsyncStorage.clear();
-                Alert.alert("Bruker slettet", "Alt valgt innhold er slettet.");
-                router.replace('/auth/login');
-            } else {
-                const msg = await res.text();
-                Alert.alert("Feil", msg);
-            }
-        } catch (err) {
-            Alert.alert("Feil", "Klarte ikke å slette bruker.");
-            console.error("Slette bruker error:", err);
-        }
-    };
 
     return (
         <SafeAreaView style={styles.container}>
