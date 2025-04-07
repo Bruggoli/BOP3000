@@ -27,6 +27,24 @@ const avatarMap: Record<string, any> = {
     'avatar17.png': require('../assets/avatars/avatar17.png'),
 };
 
+type Post = {
+    _id: string;
+    brukerId: string;
+    tittel: string;
+    innhold: string;
+    location?: string;
+    klubbId?: string;
+    likes: string[];
+    kommentarer: { tekst: string }[];
+    opprettet: string;
+};
+
+type Klubb = {
+    _id: string;
+    navn: string;
+    farge: string;
+};
+
 export default function Profile() {
     const [profile, setProfile] = useState<any>(null);
     const [posts, setPosts] = useState<any[]>([]);
@@ -51,55 +69,49 @@ export default function Profile() {
         setUserId(id);
 
         try {
-            const [profileRes, allPostsRes, profileListRes] = await Promise.all([
+            const [profileRes, postsRes, klubberRes] = await Promise.all([
                 fetch(`http://10.0.2.2:3000/profil/${id}`),
-                fetch('http://10.0.2.2:3000/post'),
-                fetch('http://10.0.2.2:3000/profil'),
+                fetch(`http://10.0.2.2:3000/post`),
+                fetch(`http://10.0.2.2:3000/klubb`),
             ]);
 
             const profileData = await profileRes.json();
-            const allPosts = await allPostsRes.json();
-            const allProfiles = await profileListRes.json();
-            const userMap: Record<string, any> = {};
-            allProfiles.forEach((p: any) => {
-                userMap[p._id] = p;
+            const allPosts = await postsRes.json();
+            const klubber: Klubb[] = await klubberRes.json();
+
+            const klubbMap: Record<string, string> = {};
+            klubber.forEach((klubb) => {
+                klubbMap[klubb._id] = klubb.farge;
             });
 
+            const userPosts = allPosts
+                .filter((p: Post) => p.brukerId === id)
+                .map((p: Post) => {
+                    const createdAt = new Date(p.opprettet);
+                    return {
+                        postId: p._id,
+                        userId: p.brukerId,
+                        username: profileData.brukernavn || 'Ukjent',
+                        userAvatar: profileData.icon || 'avatar1.png',
+                        title: p.tittel,
+                        text: p.innhold,
+                        location: p.location || "Campus Bø",
+                        clubName: p.klubbId ? klubber.find(k => k._id === p.klubbId)?.navn || "Ukjent klubb" : "New Feed",
+                        color: p.klubbId ? klubbMap[p.klubbId] || "#666" : "#888888", // Default farge for "New Feed"
+                        likes: Array.isArray(p.likes) ? p.likes : [],
+                        comments: Array.isArray(p.kommentarer) ? p.kommentarer.length : 0,
+                        timestamp: createdAt.toLocaleString('no-NO', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
+                        createdAt,
+                    };
+                });
+
+            const sorted = userPosts.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setProfile(profileData);
-
-            const userPosts = await Promise.all(
-                allPosts
-                    .filter((post: any) => post.brukerId === id)
-                    .map(async (post: any) => {
-                        const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
-                        const commentList = await commentRes.json();
-
-                        const createdAt = new Date(post.opprettet);
-
-                        return {
-                            postId: post._id,
-                            userId: post.brukerId,
-                            username: profileData?.brukernavn || 'Ukjent',
-                            userAvatar: profileData?.icon || 'avatar1.png',
-                            title: post.tittel,
-                            text: post.innhold,
-                            location: post.location || "Campus Bø",
-                            clubName: "New Feed",
-                            color: "#444",
-                            likes: Array.isArray(post.likes) ? post.likes : [],
-                            comments: commentList.length,
-                            timestamp: createdAt.toLocaleString('no-NO', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }),
-                            createdAt
-                        };
-                    })
-            );
-
-            const sorted = userPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
             setPosts(sorted);
         } catch (error) {
             console.error('Feil ved lasting av profil eller innlegg:', error);
@@ -117,8 +129,6 @@ export default function Profile() {
             });
 
             const data = await res.json();
-            console.log("Respons fra server:", res.status, data);
-
             if (res.ok) {
                 setProfile((prev: any) => ({ ...prev, icon: newIcon }));
                 setModalVisible(false);

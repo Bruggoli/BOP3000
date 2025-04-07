@@ -20,13 +20,16 @@ export default function HomeScreen() {
         setUserId(storedUserId || '');
 
         try {
-            const [postRes, profileRes] = await Promise.all([
+            const [postRes, profileRes, klubbRes] = await Promise.all([
                 fetch('http://10.0.2.2:3000/post'),
                 fetch('http://10.0.2.2:3000/profil'),
+                fetch('http://10.0.2.2:3000/klubb'),
             ]);
 
             const postList = await postRes.json();
             const profileList = await profileRes.json();
+            const klubbList = await klubbRes.json();
+
             setProfiles(profileList);
 
             const userMap: Record<string, any> = {};
@@ -34,17 +37,26 @@ export default function HomeScreen() {
                 userMap[u._id] = u;
             });
 
+            const klubbMap: Record<string, any> = {};
+            klubbList.forEach((k: any) => {
+                klubbMap[k._id] = k;
+            });
+
             const postsWithUser = await Promise.all(
                 postList.map(async (post: any) => {
                     const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
                     const commentList = await commentRes.json();
+
+                    const klubb = post.klubbId ? klubbMap[post.klubbId] : null;
+                    const isNewFeed = !post.klubbId || !klubb;
 
                     return {
                         ...post,
                         username: userMap[post.brukerId]?.brukernavn || 'Ukjent',
                         userAvatar: userMap[post.brukerId]?.icon || 'avatar1.png',
                         location: post.location || 'Campus Bø',
-                        clubName: 'New Feed',
+                        clubName: klubb?.navn || 'New Feed',
+                        color: isNewFeed ? '#374151' : klubb.farge, // 🎨 Egen farge for "New Feed"
                         timestamp: new Date(post.opprettet).toLocaleString('no-NO', {
                             day: '2-digit',
                             month: '2-digit',
@@ -70,7 +82,7 @@ export default function HomeScreen() {
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item._id}
-                renderItem={({item}) => (
+                renderItem={({ item }) => (
                     <PostCard
                         postId={item._id}
                         userId={item.brukerId}
@@ -80,18 +92,18 @@ export default function HomeScreen() {
                         text={item.innhold}
                         location={item.location}
                         clubName={item.clubName}
-                        color="#444"
+                        color={item.color}
                         likes={item.likes || []}
-                        comments={item.commentCount} // ✅ viser riktig antall kommentarer
+                        comments={item.commentCount}
                         timestamp={item.timestamp}
                         currentUserId={userId}
                     />
                 )}
-                contentContainerStyle={{paddingBottom: 120}}
+                contentContainerStyle={{ paddingBottom: 120 }}
                 showsVerticalScrollIndicator={false}
             />
 
-            <BottomMenu/>
+            <BottomMenu />
         </SafeAreaView>
     );
 }

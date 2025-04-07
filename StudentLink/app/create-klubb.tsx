@@ -6,9 +6,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomMenu from "@/components/Navigation/BottomMenu";
 import Navbar from "@/components/Navigation/Navbar";
 
+const availableColors = [
+    '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
+    '#22C55E', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9',
+    '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF',
+    '#EC4899', '#F43F5E', '#6B7280', '#94A3B8', '#64748B',
+];
+
 export default function CreateKlubb() {
     const [clubName, setClubName] = useState('');
     const [description, setDescription] = useState('');
+    const [selectedColor, setSelectedColor] = useState(availableColors[0]);
     const router = useRouter();
 
     const handleCreateClub = async () => {
@@ -17,17 +25,22 @@ export default function CreateKlubb() {
             return;
         }
 
-        // Hent brukerId fra AsyncStorage (midlertidig hardkodet hvis ikke implementert)
-        let userId = await AsyncStorage.getItem('userId');
-        if (!userId) userId = "testUser"; // Midlertidig løsning til innlogging er på plass
-
-        const clubData = {
-            brukerId: userId,
-            navn: clubName,
-            beskrivelse: description,
-        };
-
         try {
+            const userId = await AsyncStorage.getItem('userId');
+
+            if (!userId) {
+                Alert.alert('Feil', 'Bruker ikke logget inn. Kan ikke opprette klubb.');
+                return;
+            }
+
+            const clubData = {
+                navn: clubName,
+                beskrivelse: description,
+                brukerId: userId, // 👈 sendes til backend
+                følgere: [],
+                farge: selectedColor,
+            };
+
             const response = await fetch('http://10.0.2.2:3000/klubb', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -41,14 +54,13 @@ export default function CreateKlubb() {
 
             setClubName('');
             setDescription('');
-            router.replace('/clubs'); // Naviger tilbake til klubboversikten
-        } catch (error) {
-            // @ts-ignore
+            router.replace('/clubs');
+        } catch (error: any) {
             console.error('Feil ved oppretting av klubb:', error.message);
-            // @ts-ignore
             Alert.alert('Feil', error.message);
         }
     };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -58,7 +70,7 @@ export default function CreateKlubb() {
 
             <TextInput
                 style={styles.input}
-                placeholder="Skriv inn klubbnavn..."
+                placeholder="Skriv inn klubbnavn."
                 placeholderTextColor="#aaa"
                 value={clubName}
                 onChangeText={setClubName}
@@ -66,12 +78,27 @@ export default function CreateKlubb() {
 
             <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Skriv inn en beskrivelse..."
+                placeholder="Skriv inn en beskrivelse."
                 placeholderTextColor="#aaa"
                 value={description}
                 onChangeText={setDescription}
                 multiline
             />
+
+            <Text style={styles.label}>Velg klubbfarge:</Text>
+            <View style={styles.colorGrid}>
+                {availableColors.map((color) => (
+                    <TouchableOpacity
+                        key={color}
+                        style={[
+                            styles.colorButton,
+                            { backgroundColor: color },
+                            selectedColor === color && styles.selectedColor,
+                        ]}
+                        onPress={() => setSelectedColor(color)}
+                    />
+                ))}
+            </View>
 
             <TouchableOpacity style={styles.createButton} onPress={handleCreateClub}>
                 <Text style={styles.buttonText}>Opprett Klubb</Text>
@@ -111,6 +138,26 @@ const styles = StyleSheet.create({
         height: 100,
         textAlignVertical: 'top',
     },
+    label: {
+        color: 'white',
+        marginBottom: 8,
+    },
+    colorGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginBottom: 20,
+    },
+    colorButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    selectedColor: {
+        borderColor: 'white',
+    },
     createButton: {
         backgroundColor: '#4CAF50',
         padding: 12,
@@ -129,4 +176,3 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
