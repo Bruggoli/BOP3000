@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import {JSONObject} from "@expo/json-file";
 
 // Campus bø-koordinater
 // TODO: flytt fra hardcodet til database-entry
@@ -32,29 +33,32 @@ export function LocationComp() {
                 });
 
                 // Regner ut avstand fra campus bø
-                const distance = calculateDistance(
+                const distance: number = calculateDistance(
                     location.coords.latitude,
                     location.coords.longitude,
                     CAMPUS_BO_LAT,
                     CAMPUS_BO_LONG
                 );
 
-                const within = distance <= MAX_DISTANCE_KM;
-                setIsWithinCampus(within);
+                const withinDistance: boolean = distance <= MAX_DISTANCE_KM;
+                setIsWithinCampus(withinDistance);
 
                 // Add distance and within flag to location data
                 const locationWithDistance = {
-                    // ...location,
                     distanceFromCampus: distance,
-                    isWithinOslo: within
+                    isWithinCampus: withinDistance
                 };
 
                 await setLocationData(locationWithDistance);
 
-                if (!within) {
-                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus. Maks-grense er ${MAX_DISTANCE_KM}.`);
+                if (!withinDistance) {
+                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus. Maks-grense er ${MAX_DISTANCE_KM}km.
+                    Din posisjon: ${location.coords.latitude}, ${location.coords.longitude}
+                    Campus: ${CAMPUS_BO_LAT}, ${CAMPUS_BO_LONG}`);
                 } else {
-                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus.`);
+                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus.
+                    Din posisjon: ${location.coords.latitude}, ${location.coords.longitude}
+                    Campus: ${CAMPUS_BO_LAT}, ${CAMPUS_BO_LONG}`);
                 }
             } catch (error) {
                 console.error("Error getting location:", error);
@@ -65,9 +69,9 @@ export function LocationComp() {
         getCurrentLocation();
     }, []);
 
-    console.log(`${locationStatus}`);
+    console.log(`location status: ${locationStatus}`);
 
-    return { locationStatus, isWithinOslo: isWithinCampus };
+    return { locationStatus, isWithinCampus };
 }
 
 // Myyye hjelp fra claude med denne
@@ -102,3 +106,20 @@ const setLocationData = async (locationData: any): Promise<void> => {
         console.error("Error storing data:", e);
     }
 };
+// kan bruke ts-ignore her fordi vi bruker en assert
+// @ts-ignore
+export const getLocationData: () => Promise<locationWithDistance> = async (): Promise<locationWithDistance> => {
+    try {
+        const value = await AsyncStorage.getItem("location");
+        // sjekker om verdien er en string
+        assertIsValidData(value);
+        console.log("getLocationData value:" + value);
+        return  JSON.parse(value);
+    } catch (e: any) {
+        console.error("Error getting location data: " + e.toString());
+    }
+}
+
+function assertIsValidData(value: unknown): asserts value is string {
+    if (typeof value !== "string") throw new Error('value is not a string');
+}
