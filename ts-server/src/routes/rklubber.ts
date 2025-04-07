@@ -26,11 +26,11 @@ klubberRouter.get("/", async (req: Request, res: Response) => {
     }
 });
 
-// Opprett en ny klubb
+// ✅ Opprett en ny klubb og legg til som følger
 // @ts-ignore
 klubberRouter.post("/", async (req: Request, res: Response) => {
     try {
-        if (!collections.klubber) {
+        if (!collections.klubber || !collections.profiler) {
             return res.status(500).send("Database collection not initialized");
         }
 
@@ -40,16 +40,25 @@ klubberRouter.post("/", async (req: Request, res: Response) => {
             return res.status(400).send("Mangler brukerId, navn, beskrivelse eller farge");
         }
 
+        const brukerObjectId = new ObjectId(brukerId);
+
         const nyKlubb = {
-            admin: new ObjectId(brukerId),
+            admin: brukerObjectId,
             navn,
             beskrivelse,
-            følgere: [],
+            følgere: [brukerObjectId], // 👈 automatisk følger
             farge,
             opprettet: new Date(),
         };
 
-        await collections.klubber.insertOne(nyKlubb);
+        const insertResult = await collections.klubber.insertOne(nyKlubb);
+        const klubbId = insertResult.insertedId;
+
+        await collections.profiler.updateOne(
+            { _id: brukerObjectId },
+            { $addToSet: { følgerKlubber: klubbId } }
+        );
+
         const klubber = await collections.klubber.find({}).toArray();
         res.status(200).json(klubber);
     } catch (error: any) {
@@ -63,7 +72,6 @@ klubberRouter.post("/", async (req: Request, res: Response) => {
 klubberRouter.post("/folg", async (req: Request, res: Response) => {
     try {
         const { brukerId, klubbId } = req.body;
-        console.log("📥 Følg forespørsel mottatt:", { brukerId, klubbId });
 
         if (!brukerId || !klubbId) return res.status(400).send("Mangler brukerId eller klubbId");
         if (!ObjectId.isValid(brukerId) || !ObjectId.isValid(klubbId)) {
@@ -79,21 +87,16 @@ klubberRouter.post("/folg", async (req: Request, res: Response) => {
         if (!klubb) return res.status(404).send("Klubb ikke funnet");
         if (!bruker) return res.status(404).send("Bruker ikke funnet");
 
-        const klubbUpdate = await collections.klubber?.updateOne(
+        await collections.klubber?.updateOne(
             { _id: klubbObjectId },
             { $addToSet: { følgere: brukerObjectId } }
         );
 
-        const brukerUpdate = await collections.profiler?.updateOne(
+        await collections.profiler?.updateOne(
             { _id: brukerObjectId },
             { $addToSet: { følgerKlubber: klubbObjectId } }
         );
 
-        if (klubbUpdate?.modifiedCount === 0 && brukerUpdate?.modifiedCount === 0) {
-            return res.status(500).send("Ingen dokumenter ble oppdatert");
-        }
-
-        console.log(`✅ ${brukerId} følger nå ${klubbId}`);
         res.status(200).send("✅ Nå følger du klubben");
     } catch (error: any) {
         console.error("❌ Feil i /folg:", error.message);
