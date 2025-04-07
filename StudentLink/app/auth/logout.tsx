@@ -9,7 +9,7 @@ export default function LogoutScreen() {
     useEffect(() => {
         const logout = async () => {
             await AsyncStorage.removeItem('userToken'); // Fjerner tokenet
-            router.replace('/login'); // Sender brukeren til innloggingssiden
+            router.replace('/auth/login'); // Sender brukeren til innloggingssiden
         };
 
         logout();

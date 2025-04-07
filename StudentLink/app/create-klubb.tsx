@@ -28,7 +28,7 @@ export default function CreateKlubb() {
         };
 
         try {
-            const response = await fetch('http://10.0.2.2:3000/klubb', {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/klubb`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(clubData),
@@ -43,8 +43,9 @@ export default function CreateKlubb() {
             setDescription('');
             router.replace('/clubs'); // Naviger tilbake til klubboversikten
         } catch (error) {
-            console.error('Feil ved oppretting av klubb:', error.message);
-            Alert.alert('Feil', error.message);
+
+            console.error('Feil ved oppretting av klubb:', (error as Error).message);
+            Alert.alert('Feil', (error as Error).message);
         }
     };
 

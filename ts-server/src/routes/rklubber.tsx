@@ -7,6 +7,7 @@ export const klubberRouter = express.Router();
 // Hent alle klubber eller søk etter en klubb
 // @ts-ignore
 klubberRouter.get("/", async (req: Request, res: Response) => {
+
     try {
         if (!collections.klubber) {
             return res.status(500).send("Database collection not initialized");

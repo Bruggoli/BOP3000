@@ -19,7 +19,7 @@ export default function ClubsScreen() {
     const fetchClubs = async (query = "") => {
         try {
             setLoading(true);
-            const response = await fetch(`http://10.0.2.2:3000/klubb?q=${query}`);
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/klubb?q=${query}`);
             const data = await response.json();
             setClubs(data);
         } catch (error) {
@@ -59,7 +59,7 @@ export default function ClubsScreen() {
                 ) : (
                     <FlatList
                         data={clubs}
-                        keyExtractor={(item) => item._id}
+                        keyExtractor={(item: any) => item._id}
                         renderItem={({ item }) => <ClubItem club={item} />}
                     />
                 )}

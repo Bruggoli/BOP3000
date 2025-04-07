@@ -1,177 +1,114 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { FlatList, StyleSheet, View, Modal, TouchableOpacity, Text, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { FlatList, StyleSheet, View, Text, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
-import Post from '@/components/Posts/Post';
-import BottomMenu from '@/components/Navigation/BottomMenu';
-import { LocationPermission } from '@/components/LocationComp';
-import { Ionicons } from '@expo/vector-icons';
-import { ObjectId } from "mongodb";
 import { useFocusEffect } from '@react-navigation/native';
-
+import Navbar from "@/components/Navigation/Navbar";
+import BottomMenu from "@/components/Navigation/BottomMenu";
+import PostCard from "@/components/Posts/PostCard";
+import { LocationComp } from "@/components/LocationComp";
+import { Router, useRouter } from "expo-router";
 
 export default function HomeScreen() {
-    const systemColorScheme = useColorScheme();
-    const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
-    const [menuVisible, setMenuVisible] = useState(false);
-    const [posts, setPosts] = useState<MPost[]>([]);
+    const [posts, setPosts] = useState<MappedPost[]>([]);
     const [loading, setLoading] = useState(true);
+    const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
     // @ts-ignore
-    const {location, errorMsg} = LocationPermission();
-    const router = useRouter();
+    const { location, isWithin } = useState(LocationComp());
+    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
 
     useFocusEffect(
         React.useCallback(() => {
-            const fetchPosts = async () => {
-                try {
-                    const response = await fetch('http://10.0.2.2:3000/post');
-                    if (!response.ok) {
-                        throw new Error(`HTTP-feil! Status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    setPosts(data);
-                } catch (error) {
-                    console.error('Feil ved henting av poster:', error);
-                }
-            };
-
-            fetchPosts();
+            fetchEverything();
         }, [])
     );
 
-    useEffect(() => {
-        const fetchPosts = async () => {
-            alert(process.env.EXPO_PUBLIC_PHONE_HOST);
-            try {
-                const response = await fetch(process.env.EXPO_PUBLIC_PHONE_HOST + `/post`);
-                if (!response.ok) {
-                    throw new Error(`HTTP-feil! Status: ${response.status}`);
-                }
+    const fetchEverything = async () => {
 
-                const data: MPost[] = await response.json();
+        try {
 
-                // Konverter ObjectId til string og formater datoer
-                const formattedData = data.map(post => ({
-                    ...post,
-                    _id: post._id?.toString(),
-                    brukerId: post.brukerId.toString(),
-                    opprettet: new Date(post.opprettet).toLocaleString(),
-                    kommentarer: post.kommentarer?.map(kom => ({
-                        ...kom,
-                        brukerId: kom.brukerId.toString(),
-                        opprettet: new Date(kom.opprettet).toLocaleString(),
-                    })) || []
-                }));
+            const [postRes] = await Promise.all([
+                fetch(server + '/post'),
+            ]);
 
-                console.log("Hentede poster:", formattedData);
-                setPosts(formattedData);
-            } catch (error) {
-                console.error('Feil ved henting av poster:', error);
-            } finally {
-                setLoading(false);
+            const [profileRes] = await Promise.all([
+                fetch(server + '/profil'),
+            ]);
+
+            const rawPosts = await postRes.json();
+            const profileList: UserProfile[] = await profileRes.json();
+
+            const profileMap: Record<string, UserProfile> = {};
+            for (const profile of profileList) {
+                profileMap[profile._id.toString()] = profile;
             }
+
+            const formatted = rawPosts
+                .map((post: any) => {
+                    const brukerIdStr = post.brukerId?.toString();
+                    const profil = profileMap[brukerIdStr];
+                    const createdAt = new Date(post.opprettet);
+                    const timestamp = `${createdAt.getDate().toString().padStart(2, '0')}.${(createdAt.getMonth() + 1).toString().padStart(2, '0')} kl. ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
+
+                    return {
+                        postId: post._id?.toString(),
+                        userId: brukerIdStr,
+                        username: profil?.brukernavn || brukerIdStr,
+                        userAvatar: profil?.icon || 'avatar1.png',
+                        title: post.tittel,
+                        text: post.innhold,
+                        location: post.location || '',
+                        color: getColorByClub(post.klubbId),
+                        likes: post.likes?.length || 0,
+                        comments: post.kommentarer?.length || 0,
+                        timestamp: timestamp,
+                        createdAt: createdAt
+                    };
+                })
+                .sort((a: MappedPost, b: MappedPost) => b.createdAt.getTime() - a.createdAt.getTime());
+
+            setProfiles(profileMap);
+            setPosts(formatted);
+        } catch (error) {
+            console.error("Feil ved lasting av poster eller profiler:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getColorByClub = (klubbId?: string) => {
+        const clubColors: Record<string, string> = {
+            "klubb1": "#4CAF50",
+            "klubb2": "#2196F3",
+            "klubb3": "#FFC107",
         };
 
-        fetchPosts();
-    }, []);
+        if (!klubbId) {
+            const randomColors = ["#FF7043", "#AB47BC", "#29B6F6", "#66BB6A", "#FFCA28"];
+            return randomColors[Math.floor(Math.random() * randomColors.length)];
+        }
 
-
-    interface MPost {
-        _id?: string; // ObjectId lagres som string i frontend
-        brukerId: string;
-        tittel: string;
-        innhold: string;
-        likes?: string[];
-        kommentarer?: { brukerId: string; tekst: string; opprettet: string }[];
-        opprettet: string;
-    }
-
-
-
-    const toggleTheme = () => {
-        setIsDarkMode(!isDarkMode);
+        return clubColors[klubbId] || "#607D8B";
     };
-
-    const toggleMenu = () => {
-        setMenuVisible(!menuVisible);
-    };
-
-    const themeStyles = useMemo(() => ({
-        menuBackground: isDarkMode ? '#333' : 'white',
-        textColor: isDarkMode ? 'white' : '#000',
-        borderColor: isDarkMode ? '#555' : '#ccc',
-    }), [isDarkMode]);
-
-    console.log(location !== null ? location: "hæææ");
 
     return (
-        <SafeAreaView style={[styles.safeContainer, { backgroundColor: isDarkMode ? '#121212' : '#fff' }]}>
+        <SafeAreaView style={styles.safeContainer}>
+            <StatusBar barStyle="light-content" />
+            <Navbar location="Hjem" toggleTheme={() => {}} />
 
-            {/* Navbar */}
-            <View style={styles.navbar}>
-                <View style={styles.locationContainer}>
-                    <Ionicons name="location-outline" size={24} color="white" />
-                    <Text style={styles.locationText}>Campus Bø</Text>
-                </View>
-
-                <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-                    <Ionicons name="ellipsis-vertical" size={24} color="white" />
-                </TouchableOpacity>
-            </View>
-
-            {/* MODAL FOR MENU */}
-            <Modal
-                transparent={true}
-                animationType="fade"
-                visible={menuVisible}
-                onRequestClose={() => setMenuVisible(false)}
-            >
-                <TouchableOpacity style={styles.modalBackground} onPress={toggleMenu}>
-                    <View style={[styles.menuContainer, { backgroundColor: themeStyles.menuBackground }]}>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/profile'); }} style={styles.menuItem}>
-                            <Text style={[styles.menuText, { color: themeStyles.textColor }]}>Profile</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/clubs'); }} style={styles.menuItem}>
-                            <Text style={[styles.menuText, { color: themeStyles.textColor }]}>Clubs</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/settings'); }} style={styles.menuItem}>
-                            <Text style={[styles.menuText, { color: themeStyles.textColor }]}>Settings</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={toggleTheme} style={styles.menuItem}>
-                            <Text style={[styles.menuText, { color: themeStyles.textColor }]}>Dark / Light Mode</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/terms-of-service'); }} style={styles.menuItem}>
-                            <Text style={[styles.menuText, { color: themeStyles.textColor }]}>Terms of Service</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { toggleMenu(); router.push('/logout'); }} style={[styles.menuItem, styles.logout, { borderColor: themeStyles.borderColor }]}>
-                            <Text style={[styles.menuText, { color: themeStyles.textColor }]}>Log Out</Text>
-                        </TouchableOpacity>
-                    </View>
-                </TouchableOpacity>
-            </Modal>
-
-            {/* FlatList for Posts */}
             <FlatList
                 data={posts}
-                keyExtractor={(item) => item._id!} // ObjectId som string
-                renderItem={({ item }) => (
-                    <View style={styles.postContainer}>
-                        <Text style={styles.postTitle}>{item.tittel}</Text>
-                        <Text style={styles.postContent}>{item.innhold}</Text>
-                        <Text style={styles.postTimestamp}>{item.opprettet}</Text>
-                    </View>
-                )}
+                keyExtractor={(item) => item.postId}
+                renderItem={({ item }) => <PostCard {...item} />}
                 ListEmptyComponent={<Text style={styles.noPosts}>Ingen innlegg funnet.</Text>}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             />
-            <View style={styles.container}>
+            <View style={styles.safeContainer}>
 
-                <Text style={styles.paragraph}>{
+                <Text>{
                     // @ts-ignore
-                    location !== null ? location.toString(): errorMsg
+                    location !== null ? location: errorMsg
                 }</Text>
             </View>
 
@@ -181,91 +118,34 @@ export default function HomeScreen() {
     );
 }
 
+type MappedPost = {
+    postId: string;
+    userId: string;
+    username: string;
+    userAvatar?: string;
+    title: string;
+    text: string;
+    location: string;
+    color: string;
+    likes: number;
+    comments: number;
+    timestamp: string;
+    createdAt: Date;
+};
+
+type UserProfile = {
+    _id: string;
+    brukernavn: string;
+    icon?: string;
+};
+
 const styles = StyleSheet.create({
     safeContainer: {
         flex: 1,
-    },
-    navbar: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 15,
-        backgroundColor: '#222',
-    },
-    locationContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    locationText: {
-        color: 'white',
-        fontSize: 16,
-        marginLeft: 5,
-    },
-    menuButton: {
-        padding: 5,
-    },
-    modalBackground: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    menuContainer: {
-        width: 250,
-        borderRadius: 10,
-        paddingVertical: 10,
-        alignItems: 'center',
-    },
-    menuItem: {
-        paddingVertical: 12,
-        width: '100%',
-        alignItems: 'center',
-    },
-    menuText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    logout: {
-        borderTopWidth: 1,
-        marginTop: 5,
+        backgroundColor: '#121212',
     },
     list: {
-        paddingBottom: 80, // 🔹 Viktig! Plass til BottomMenu så siste innlegg ikke skjules
-    },
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-    },
-    paragraph: {
-        fontSize: 18,
-        textAlign: 'center',
-        color: 'red',
-    },
-    //midlertidlig ccs
-    postContainer: {
-        backgroundColor: '#222',
-        padding: 15,
-        marginVertical: 10,
-        borderRadius: 10,
-    },
-    postTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    postContent: {
-        fontSize: 14,
-        color: '#ccc',
-        marginTop: 5,
-    },
-    postTimestamp: {
-        fontSize: 12,
-        color: '#777',
-        marginTop: 10,
-        textAlign: 'right',
+        paddingBottom: 80,
     },
     noPosts: {
         textAlign: 'center',
