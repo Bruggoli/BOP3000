@@ -136,38 +136,6 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
         res.status(500).send(error.message);
     }
 });
-+
-// Hent bruker basert på e-post (for innlogging)
-// @ts-ignore
-profilRouter.post("/login", async (req: Request, res: Response) => {
-
-    try {
-        if (!collections.profiler) {
-            return res.status(500).send("Database collection ikke initialisert");
-        }
-
-        const { email, passord } = req.body;
-        if (!email || !passord) {
-            return res.status(400).send("Mangler e-post eller passord");
-        }
-
-        const bruker = await collections.profiler.findOne({ email });
-
-        if (!bruker) {
-            return res.status(404).send("Bruker ikke funnet");
-        }
-
-        // Her burde du egentlig hashe passordet og sammenligne, men vi gjør en enkel sammenligning nå:
-        if (bruker.passord !== passord) {
-            return res.status(401).send("Feil passord");
-        }
-
-        res.status(200).json(bruker);
-    } catch (error) {
-        res.status(500).send("Feil ved innlogging");
-    }
-});
-
 
 // Hent bruker basert på ID
 // @ts-ignore
@@ -288,8 +256,7 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
 
         email = email.trim().toLowerCase();
 
-        const user = await collections.profiler?.findOne({ email });
-        console.log("Bruker ved innlogging:", user);
+        console.log("🔍 Bruker funnet:", user);
 
         if (!user) {
             return res.status(401).json({ error: "Ugyldig e-post eller passord" });
@@ -304,12 +271,10 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
         if (!isValid) {
             return res.status(401).json({ error: "Ugyldig e-post eller passord" });
         }
-        console.log("🔍 Bruker ved innlogging:", user);
-
 
         res.status(200).json({ userId: user._id });
     } catch (error: any) {
         console.error("💥 Login error:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message || "Ukjent feil ved innlogging." });
     }
 });

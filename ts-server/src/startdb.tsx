@@ -13,13 +13,10 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
-// @ts-ignore
-
 
 // Middleware for JSON-parsing
 app.use(cors());
 app.use(express.json());
-app.use("/report", reportRouter);
 
 // Koble til databasen og starte serveren
 connectToDb()
@@ -32,6 +29,7 @@ connectToDb()
         app.use("/post", postRouter);
         // Kommentarer lastes inn via poster, men beholdes midlertidig
         app.use("/kommentar", kommentarRouter);
+        app.use("/report", reportRouter);
 
         // Hovedendepunkt
         app.get("/", (req: Request, res: Response) => {
