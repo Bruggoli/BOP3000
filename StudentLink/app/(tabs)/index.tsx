@@ -23,6 +23,7 @@ export default function HomeScreen() {
     );
 
     const fetchEverything = async () => {
+
         try {
 
             const [postRes] = await Promise.all([
