@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
+import {
+    View, Text, Image, FlatList, StyleSheet, TouchableOpacity,
+    Modal, ScrollView, Alert
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -111,8 +114,8 @@ export default function Profile() {
                     })
             );
 
-            const sorted = userPosts.sort((a, b) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            const sorted = userPosts.sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
             setPosts(sorted);
         } catch (error) {
@@ -179,7 +182,7 @@ export default function Profile() {
                     showsVerticalScrollIndicator={false}
                 />
             ) : (
-                <View style={styles.clubList}>
+                <ScrollView style={styles.clubList} contentContainerStyle={{ paddingBottom: 100 }}>
                     {followedClubs.map((club) => (
                         <View
                             key={club._id}
@@ -192,7 +195,7 @@ export default function Profile() {
                     <TouchableOpacity style={styles.exploreButton} onPress={() => router.push('/clubs')}>
                         <Text style={styles.exploreText}>Oppdag flere klubber</Text>
                     </TouchableOpacity>
-                </View>
+                </ScrollView>
             )}
 
             <Modal visible={modalVisible} animationType="slide">
@@ -266,7 +269,6 @@ const styles = StyleSheet.create({
     },
     clubList: {
         flex: 1,
-        paddingBottom: 100,
     },
     clubCard: {
         borderRadius: 10,
