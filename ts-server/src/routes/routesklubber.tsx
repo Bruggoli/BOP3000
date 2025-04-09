@@ -31,8 +31,8 @@ klubberRouter.get("/", async (req: Request, res: Response) => {
 // @ts-ignore
 klubberRouter.post("/", async (req: Request, res: Response) => {
     try {
-        if (!collections.klubber) {
-            return res.status(500).send("Database collection not initialized");
+        if (!collections.klubber || !collections.profiler) {
+            return res.status(500).send("Database collections not initialized");
         }
 
         const { brukerId, navn, beskrivelse } = req.body;
@@ -40,21 +40,36 @@ klubberRouter.post("/", async (req: Request, res: Response) => {
             return res.status(400).send("Mangler brukerId, navn eller beskrivelse");
         }
 
+        const brukerObjectId = new ObjectId(brukerId);
+
         const nyKlubb = {
             brukerId,
             navn,
             beskrivelse,
             opprettet: new Date(),
+            følgere: [brukerObjectId], // ✅ første følger
         };
 
-        await collections.klubber.insertOne(nyKlubb);
+        // Sett inn klubben i databasen
+        const resultat = await collections.klubber.insertOne(nyKlubb);
+        const klubbId = resultat.insertedId;
+
+        // Legg til klubben i brukerens følgerKlubber
+        await collections.profiler.updateOne(
+            { _id: brukerObjectId },
+            { $addToSet: { følgerKlubber: klubbId } }
+        );
+
+        console.log(`✅ Klubb '${navn}' opprettet av ${brukerId} og lagt til som følger`);
+
         const klubber = await collections.klubber.find({}).toArray();
-        res.status(200).json(klubber);
+        res.status(201).json(klubber);
     } catch (error: any) {
         console.error("❌ Feil ved oppretting av klubb:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
+
 
 // Følg en klubb
 // @ts-ignore
@@ -136,5 +151,16 @@ klubberRouter.post("/sluttfolg", async (req: Request, res: Response) => {
         console.error("❌ Feil i /sluttfolg:", error.message);
         res.status(500).json({ error: error.message });
     }
+
+// Sjekk om klubben har noen følgere igjen – hvis ikke, slett den
+    // @ts-ignore
+    const oppdatertKlubb = await collections.klubber?.findOne({ _id: klubbObjectId });
+    if (!oppdatertKlubb?.følgere || oppdatertKlubb.følgere.length === 0) {
+        // @ts-ignore
+        await collections.klubber?.deleteOne({ _id: klubbObjectId });
+        console.log("🗑️ Klubben ble slettet fordi den ikke hadde noen følgere igjen");
+    }
+
+
 });
 

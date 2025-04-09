@@ -29,7 +29,7 @@ export default function RegisterScreen() {
 
         const profil = {
             username,
-            email,
+            email: email.trim().toLowerCase(), // 👈 legg til denne
             password,
             icon: 'https://your-api.com/avatars/avatar1.png',
             medlemskap: [],

@@ -245,7 +245,9 @@ profilRouter.delete("/:id", async (req: Request, res: Response) => {
 // Login med sjekk av verifisering
 // @ts-ignore
 profilRouter.post("/login", async (req: Request, res: Response) => {
-    console.log("🛂 Login request:", req.body);
+    console.log("🛂 Login route triggered");
+    console.log("📦 req.headers:", req.headers);
+    console.log("📦 req.body:", req.body); // 👈 denne er viktigst
 
     try {
         let { email, password } = req.body;
@@ -254,7 +256,11 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
             return res.status(400).json({ error: "E-post og passord må fylles ut" });
         }
 
-        email = email.trim().toLowerCase();
+        email = email.trim();
+
+        const user = await collections.profiler?.findOne({
+            email: { $regex: `^${email}$`, $options: "i" } // 👈 søk uavhengig av store/små bokstaver
+        });
 
         console.log("🔍 Bruker funnet:", user);
 
