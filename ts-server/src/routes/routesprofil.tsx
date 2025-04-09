@@ -1,7 +1,8 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import MProfil from "../models/mProfil";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import ModelsProfil from "../models/modelsProfil";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
@@ -25,7 +26,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const verifyToken = crypto.randomBytes(32).toString("hex");
 
-        const nyProfil: MProfil = {
+        const nyProfil: ModelsProfil = {
             brukernavn: username,
             email,
             passord: hashedPassword,
@@ -136,7 +137,7 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
     }
 });
 
-// Hent en spesifikk profil basert på ID
+// Hent bruker basert på ID
 // @ts-ignore
 profilRouter.get("/:id", async (req: Request, res: Response) => {
     try {
@@ -159,7 +160,9 @@ profilRouter.get("/:id", async (req: Request, res: Response) => {
             res.status(500).send("Ukjent feil");
         }
     }
+
 });
+
 
 // Oppdater profilens ikon
 // @ts-ignore
@@ -187,10 +190,64 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
     }
 });
 
+// @ts-ignore
+// Slett en brukerprofil og relaterte data
+profilRouter.delete("/:id", async (req: Request, res: Response) => {
+    try {
+        const { profiler, kommentar, poster, klubber } = collections;
+
+        if (!profiler) return res.status(500).send("Profil-collection ikke tilgjengelig");
+
+        const id = new ObjectId(req.params.id);
+        const slettKommentarer = req.query.slettKommentarer === "true";
+        const slettPoster = req.query.slettPoster === "true";
+
+        // Slett kommentarer
+        if (slettKommentarer && kommentar) {
+            await kommentar.deleteMany({ brukerId: id });
+        }
+
+        // Slett poster
+        if (slettPoster && poster) {
+            await poster.deleteMany({ brukerId: id });
+        }
+
+        // Fjern bruker fra klubb-medlemskap
+        if (klubber) {
+            // Fjern fra medlemslisten
+            await klubber.updateMany(
+                { "medlemmer.brukerId": id },
+                { $pull: { medlemmer: { brukerId: id } } as any }
+            );
+
+            // Fjern admin-feltet hvis bruker var admin
+            await klubber.updateMany(
+                { admin: id },
+                { $unset: { admin: "" } }
+            );
+        }
+
+        // Slett selve profilen
+        const resultat = await profiler.deleteOne({ _id: id });
+
+        if (resultat.deletedCount === 0) {
+            return res.status(404).send("Fant ikke bruker å slette.");
+        }
+
+        res.status(200).send("✅ Bruker og valgte data slettet.");
+    } catch (error) {
+        console.error("Feil ved sletting:", error);
+        res.status(500).send("Noe gikk galt ved sletting av bruker.");
+    }
+});
+
+
 // Login med sjekk av verifisering
 // @ts-ignore
 profilRouter.post("/login", async (req: Request, res: Response) => {
-    console.log("🛂 Login request:", req.body);
+    console.log("🛂 Login route triggered");
+    console.log("📦 req.headers:", req.headers);
+    console.log("📦 req.body:", req.body); // 👈 denne er viktigst
 
     try {
         let { email, password } = req.body;
@@ -199,10 +256,13 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
             return res.status(400).json({ error: "E-post og passord må fylles ut" });
         }
 
-        email = email.trim().toLowerCase();
+        email = email.trim();
 
-        const user = await collections.profiler?.findOne({ email });
-        console.log("Bruker ved innlogging:", user);
+        const user = await collections.profiler?.findOne({
+            email: { $regex: `^${email}$`, $options: "i" } // 👈 søk uavhengig av store/små bokstaver
+        });
+
+        console.log("🔍 Bruker funnet:", user);
 
         if (!user) {
             return res.status(401).json({ error: "Ugyldig e-post eller passord" });
@@ -217,12 +277,10 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
         if (!isValid) {
             return res.status(401).json({ error: "Ugyldig e-post eller passord" });
         }
-        console.log("🔍 Bruker ved innlogging:", user);
-
 
         res.status(200).json({ userId: user._id });
     } catch (error: any) {
         console.error("💥 Login error:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message || "Ukjent feil ved innlogging." });
     }
 });

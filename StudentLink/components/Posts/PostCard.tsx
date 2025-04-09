@@ -134,13 +134,20 @@ export default function PostCard({
                     </TouchableOpacity>
                     <Text style={styles.iconText}>{localLikes.length > 0 ? localLikes.length : ""}</Text>
                 </View>
+
                 <TouchableOpacity
                     style={styles.iconGroup}
-                    onPress={() => router.push({ pathname: '/comments/[postId]', params: { postId } })}
+                    onPress={() =>
+                        router.push({
+                            pathname: '/comments/[postId]',
+                            params: { postId, color }, // ✅ sender fargen med
+                        })
+                    }
                 >
                     <FontAwesome name="comment-o" size={18} color="white" />
                     <Text style={styles.iconText}>{comments !== undefined ? comments : ""}</Text>
                 </TouchableOpacity>
+
                 <Text style={styles.clubText}>{clubName} • {location}</Text>
             </View>
 

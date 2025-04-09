@@ -10,6 +10,12 @@ export default function SettingsScreen() {
     const [username, setUsername] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(false);
     const router = useRouter();
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteInput, setDeleteInput] = useState('');
+    const [slettKommentarer, setSlettKommentarer] = useState(false);
+    const [slettPoster, setSlettPoster] = useState(false);
+
+
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -45,14 +51,19 @@ export default function SettingsScreen() {
         router.replace('/auth/login');
     };
 
+    const handleDeleteUser = () => {
+        setDeleteModalVisible(true);
+        setDeleteInput('');
+        setSlettKommentarer(false);
+        setSlettPoster(false);
+    };
+
+
     return (
         <SafeAreaView style={styles.container}>
             <Navbar location="Settings" toggleTheme={() => {}} />
 
-            {/* 🚀 Boks rundt innstillingene */}
             <View style={styles.settingsBox}>
-
-                {/* Endre brukernavn */}
                 <Text style={styles.label}>Endre brukernavn:</Text>
                 <TextInput
                     style={styles.input}
@@ -65,18 +76,99 @@ export default function SettingsScreen() {
                     <Text style={styles.buttonText}>Lagre</Text>
                 </TouchableOpacity>
 
-                {/* Bytt mellom mørkt/lyst tema */}
                 <TouchableOpacity style={styles.themeButton} onPress={toggleTheme}>
                     <Text style={styles.buttonText}>Bytt til {isDarkMode ? 'Lyst' : 'Mørkt'} tema</Text>
                 </TouchableOpacity>
 
-                {/* Logg ut */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.buttonText}>Logg ut</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteUser}>
+                    <Text style={styles.buttonText}>🗑️ Slett bruker</Text>
                 </TouchableOpacity>
             </View>
 
             <BottomMenu />
+            {deleteModalVisible && (
+                <View style={styles.overlay}>
+                    <View style={styles.modalBox}>
+                        <Text style={styles.modalTitle}>Bekreft sletting</Text>
+                        <Text style={styles.modalText}>Skriv inn <Text style={{ fontWeight: 'bold' }}>"slett bruker"</Text> for å bekrefte.</Text>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="skriv her..."
+                            placeholderTextColor="#aaa"
+                            value={deleteInput}
+                            onChangeText={setDeleteInput}
+                        />
+
+                        <TouchableOpacity
+                            style={styles.checkboxOption}
+                            onPress={() => setSlettKommentarer(!slettKommentarer)}
+                        >
+                            <View style={[styles.checkbox, slettKommentarer && styles.checkedBox]} />
+                            <Text style={styles.checkboxLabel}>Slett alle kommentarer</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.checkboxOption}
+                            onPress={() => setSlettPoster(!slettPoster)}
+                        >
+                            <View style={[styles.checkbox, slettPoster && styles.checkedBox]} />
+                            <Text style={styles.checkboxLabel}>Slett alle poster</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.confirmButton, { backgroundColor: '#9C27B0' }]}
+                            onPress={async () => {
+                                if (deleteInput.trim().toLowerCase() !== "slett bruker") {
+                                    Alert.alert("Feil", 'Du må skrive "slett bruker" nøyaktig.');
+                                    return;
+                                }
+
+                                try {
+                                    const userId = await AsyncStorage.getItem('userId');
+                                    if (!userId) return;
+
+                                    const query = new URLSearchParams();
+                                    if (slettKommentarer) query.append('slettKommentarer', 'true');
+                                    if (slettPoster) query.append('slettPoster', 'true');
+
+                                    const res = await fetch(`http://10.0.2.2:3000/profil/${userId}?${query.toString()}`, {
+                                        method: 'DELETE',
+                                    });
+
+                                    if (res.ok) {
+                                        await AsyncStorage.clear();
+                                        Alert.alert("Bruker slettet", "Brukeren din er slettet.");
+                                        router.replace('/auth/login');
+                                    } else {
+                                        const msg = await res.text();
+                                        Alert.alert("Feil", msg);
+                                    }
+                                } catch (err) {
+                                    Alert.alert("Feil", "Klarte ikke å slette bruker.");
+                                }
+
+                                setDeleteModalVisible(false);
+                            }}
+                        >
+                            <Text style={styles.buttonText}>Bekreft sletting</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.cancelButton]}
+                            onPress={() => setDeleteModalVisible(false)}
+                        >
+                            <Text style={styles.buttonText}>Avbryt</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+
+
         </SafeAreaView>
     );
 }
@@ -88,22 +180,15 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     settingsBox: {
-        backgroundColor: '#222', // Mørk bakgrunn for boksen
-        borderRadius: 12, // Runde hjørner
+        backgroundColor: '#222',
+        borderRadius: 12,
         padding: 20,
-        marginTop: 20, // 🚀 Senker boksene litt ned fra Navbar
-        shadowColor: '#000', // Skygge for effekt
+        marginTop: 20,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 5, // Skygge på Android
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 15,
-        textAlign: 'center',
+        elevation: 5,
     },
     label: {
         fontSize: 16,
@@ -137,9 +222,77 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         alignItems: 'center',
+        marginBottom: 10,
+    },
+    deleteButton: {
+        backgroundColor: '#9C27B0',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
     },
     buttonText: {
         color: 'white',
         fontWeight: 'bold',
+    },
+    overlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999,
+    },
+    modalBox: {
+        backgroundColor: '#2b2b2b',
+        padding: 20,
+        borderRadius: 12,
+        width: '85%',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'white',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    modalText: {
+        fontSize: 14,
+        color: '#ccc',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    checkboxOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 8,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        borderWidth: 2,
+        borderColor: '#888',
+        marginRight: 10,
+        backgroundColor: 'transparent',
+    },
+    checkedBox: {
+        backgroundColor: '#9C27B0',
+    },
+    checkboxLabel: {
+        color: 'white',
+        fontSize: 14,
+    },
+    confirmButton: {
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    cancelButton: {
+        backgroundColor: '#D32F2F',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 10,
     },
 });

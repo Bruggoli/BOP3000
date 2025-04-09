@@ -1,10 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { klubberRouter } from "./routes/rklubber";
-import { profilRouter } from "./routes/rprofil";
-import { postRouter } from "./routes/rpost";
-import { kommentarRouter } from "./routes/rkommentar";
-import { reportRouter } from "./routes/rreport";
+import { profilRouter } from "./routes/routesprofil";
+import { postRouter } from "./routes/routespost";
+import { kommentarRouter } from "./routes/routeskommentar";
+import { reportRouter } from "./routes/routesreport";
 import connectToDb from "./services/conn";
 import bcrypt from 'bcrypt';
 import cors from 'cors';
@@ -13,13 +13,10 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
-// @ts-ignore
-
 
 // Middleware for JSON-parsing
 app.use(cors());
 app.use(express.json());
-app.use("/report", reportRouter);
 
 // Koble til databasen og starte serveren
 connectToDb()
@@ -32,6 +29,7 @@ connectToDb()
         app.use("/post", postRouter);
         // Kommentarer lastes inn via poster, men beholdes midlertidig
         app.use("/kommentar", kommentarRouter);
+        app.use("/report", reportRouter);
 
         // Hovedendepunkt
         app.get("/", (req: Request, res: Response) => {

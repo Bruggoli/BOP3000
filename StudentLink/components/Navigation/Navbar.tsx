@@ -33,19 +33,19 @@ export default function Navbar({ location, toggleTheme }: { location: string, to
                 <TouchableOpacity style={styles.modalBackground} onPress={toggleMenu}>
                     <View style={styles.menuContainer}>
                         <TouchableOpacity onPress={() => { toggleMenu(); router.push('/clubs'); }} style={styles.menuItem}>
-                            <Ionicons name="people-outline" size={20} color="black" />
+                            <Ionicons name="people-outline" size={20} color="white" />
                             <Text style={styles.menuText}>Clubs</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => { toggleMenu(); router.push('/settings'); }} style={styles.menuItem}>
-                            <Ionicons name="settings-outline" size={20} color="black" />
+                            <Ionicons name="settings-outline" size={20} color="white" />
                             <Text style={styles.menuText}>Settings</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={toggleTheme} style={styles.menuItem}>
-                            <Ionicons name="contrast-outline" size={20} color="black" />
+                            <Ionicons name="contrast-outline" size={20} color="white" />
                             <Text style={styles.menuText}>Dark / Light Mode</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => { toggleMenu(); router.push('/terms-of-service'); }} style={styles.menuItem}>
-                            <Ionicons name="document-text-outline" size={20} color="black" />
+                            <Ionicons name="document-text-outline" size={20} color="white" />
                             <Text style={styles.menuText}>Terms of Service</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => { toggleMenu(); router.push('/auth/logout'); }} style={[styles.menuItem, styles.logout]}>
@@ -61,7 +61,7 @@ export default function Navbar({ location, toggleTheme }: { location: string, to
 
 const styles = StyleSheet.create({
     navbarContainer: {
-        width: '100%', // Dekker hele skjermen
+        width: '100%',
         backgroundColor: '#222',
     },
     navbar: {
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 15,
         paddingVertical: 15,
-        width: '100%', // Sikrer at den dekker hele bredden
+        width: '100%',
     },
     locationContainer: {
         flexDirection: 'row',
@@ -92,11 +92,11 @@ const styles = StyleSheet.create({
     },
     menuContainer: {
         width: 250,
-        backgroundColor: 'white',
+        backgroundColor: '#222',
         borderRadius: 10,
         paddingVertical: 10,
         alignItems: 'center',
-        elevation: 5, // Skyggeeffekt for Android
+        elevation: 5,
     },
     menuItem: {
         flexDirection: 'row',
@@ -109,11 +109,11 @@ const styles = StyleSheet.create({
     menuText: {
         fontSize: 16,
         fontWeight: '500',
-        color: 'black',
+        color: 'white',
     },
     logout: {
         borderTopWidth: 1,
-        borderColor: '#ccc',
+        borderColor: '#444',
         marginTop: 5,
         paddingTop: 10,
     },
