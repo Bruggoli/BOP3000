@@ -1,9 +1,11 @@
 import { ObjectId } from "mongodb";
 
-export interface Klubb {
+export default interface Klubb {
     _id?: ObjectId;
     navn: string;
     beskrivelse: string;
     admin: ObjectId;
-    følgere?: ObjectId[];
+    følgere: ObjectId[];
+    farge: string; // 👈 NY!
 }
+
