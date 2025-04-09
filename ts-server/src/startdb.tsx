@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { klubberRouter } from "./routes/routesklubber";
+import { klubberRouter } from "./routes/rklubber";
 import { profilRouter } from "./routes/routesprofil";
 import { postRouter } from "./routes/routespost";
 import { kommentarRouter } from "./routes/routeskommentar";
