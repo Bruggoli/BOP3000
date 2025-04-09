@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ReportModal from '@/components/Posts/ReportModal'; // juster path etter behov
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../../assets/avatars/avatar1.png'),
@@ -57,6 +59,7 @@ export default function PostCard({
     const [localLikes, setLocalLikes] = useState<string[]>(likes);
     const hasLiked = localLikes.includes(currentUserId);
     const router = useRouter();
+    const [modalVisible, setModalVisible] = useState(false);
 
     const handleLike = async () => {
         try {
@@ -68,11 +71,40 @@ export default function PostCard({
 
             setLocalLikes((prevLikes) =>
                 prevLikes.includes(currentUserId)
-                    ? prevLikes.filter(id => id !== currentUserId)
+                    ? prevLikes.filter((id) => id !== currentUserId)
                     : [...prevLikes, currentUserId]
             );
         } catch (err) {
             console.error("Kunne ikke like/unlike posten:", err);
+        }
+    };
+
+    const sendReport = async (reason: string) => {
+        try {
+            const userEmail = await AsyncStorage.getItem('userEmail');
+            const response = await fetch("http://10.0.2.2:3000/report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    postId,
+                    reportedBy: currentUserId,
+                    reason,
+                    postTitle: title,
+                    postText: text,
+                    reporterEmail: userEmail
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                Alert.alert("Takk!", "Rapporten er sendt.");
+            } else {
+                Alert.alert("Feil", result?.error || "Kunne ikke sende rapport.");
+            }
+        } catch (error) {
+            console.error("Feil ved rapportering:", error);
+            Alert.alert("Feil", "Kunne ikke sende rapport.");
         }
     };
 
@@ -88,8 +120,8 @@ export default function PostCard({
 
             <View style={styles.titleRow}>
                 <Text style={styles.title}>{title}</Text>
-                <TouchableOpacity>
-                    <FontAwesome name="flag" size={18} color="black" />
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <FontAwesome name="flag" size={18} color="white" />
                 </TouchableOpacity>
             </View>
 
@@ -111,6 +143,12 @@ export default function PostCard({
                 </TouchableOpacity>
                 <Text style={styles.clubText}>{clubName} • {location}</Text>
             </View>
+
+            <ReportModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                onSubmit={(reason) => sendReport(reason)}
+            />
         </View>
     );
 }

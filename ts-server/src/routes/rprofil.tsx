@@ -44,6 +44,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS,
             },
+            secure: true,
         });
 
         const verifyLink = `http://localhost:3000/profil/verify/${verifyToken}`;

@@ -5,20 +5,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '@/components/Navigation/Navbar';
 import PostCard from '@/components/Posts/PostCard';
 import BottomMenu from '@/components/Navigation/BottomMenu';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState('');
     const [profiles, setProfiles] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true); // 👈 ny state
+
+    const router = useRouter();
 
     useEffect(() => {
-        loadData();
+        const init = async () => {
+            const storedUserId = await AsyncStorage.getItem('userId');
+            if (storedUserId) {
+                setUserId(storedUserId);
+                await loadData(storedUserId);
+            }
+            setIsLoading(false);
+        };
+
+        init();
     }, []);
 
-    const loadData = async () => {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        setUserId(storedUserId || '');
 
+    const loadData = async (userIdFromStorage: string) => {
         try {
             const [postRes, profileRes] = await Promise.all([
                 fetch('http://10.0.2.2:3000/post'),
@@ -62,6 +73,11 @@ export default function HomeScreen() {
             console.error('Feil ved lasting av innlegg:', err);
         }
     };
+
+    // 👇 blokkér visning mens vi sjekker login
+    if (isLoading) {
+        return null; // eller en spinner, f.eks. <ActivityIndicator />
+    }
 
     return (
         <SafeAreaView style={styles.container}>
