@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
-    StyleSheet, Alert, KeyboardAvoidingView, Platform
+    StyleSheet, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import Navbar from '@/components/Navigation/Navbar';
 import { router } from 'expo-router';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function CreatePostScreen() {
     const [title, setTitle] = useState('');
@@ -16,6 +17,9 @@ export default function CreatePostScreen() {
     const [selectedClub, setSelectedClub] = useState('');
     const [userId, setUserId] = useState('');
     const [clubs, setClubs] = useState<any[]>([]);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
 
     useEffect(() => {
         const loadData = async () => {
@@ -41,14 +45,20 @@ export default function CreatePostScreen() {
         loadData();
     }, []);
 
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
+
     const handleCreatePost = async () => {
         if (!title || !content) {
-            Alert.alert('Feil', 'Tittel og innhold kan ikke være tomme');
+            showAlert('Feil', 'Tittel og innhold kan ikke være tomme');
             return;
         }
 
         if (selectedClub && !clubs.find((c) => c._id === selectedClub)) {
-            Alert.alert('Feil', 'Du kan ikke poste i en klubb du ikke følger.');
+            showAlert('Feil', 'Du kan ikke poste i en klubb du ikke følger.');
             return;
         }
 
@@ -70,17 +80,17 @@ export default function CreatePostScreen() {
             });
 
             if (response.ok) {
-                Alert.alert('Suksess', 'Innlegget ble opprettet!');
+                showAlert('Suksess', 'Innlegget ble opprettet!');
                 setTitle('');
                 setContent('');
                 setSelectedClub('');
-                router.replace('/');
+                setTimeout(() => router.replace('/'), 1000); // Litt delay for at brukeren ser meldingen
             } else {
-                Alert.alert('Feil', 'Kunne ikke opprette innlegget.');
+                showAlert('Feil', 'Kunne ikke opprette innlegget.');
             }
         } catch (error) {
             console.error('Feil ved oppretting av innlegg:', error);
-            Alert.alert('Feil', 'Noe gikk galt ved oppretting.');
+            showAlert('Feil', 'Noe gikk galt ved oppretting.');
         }
     };
 
@@ -136,6 +146,13 @@ export default function CreatePostScreen() {
             </KeyboardAvoidingView>
 
             <BottomMenu />
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+            />
         </SafeAreaView>
     );
 }

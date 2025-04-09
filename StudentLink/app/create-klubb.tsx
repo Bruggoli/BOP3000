@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomMenu from "@/components/Navigation/BottomMenu";
 import Navbar from "@/components/Navigation/Navbar";
+import CustomAlert from "@/components/CustomAlert";
 
 const availableColors = [
     '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
@@ -17,26 +18,34 @@ export default function CreateKlubb() {
     const [clubName, setClubName] = useState('');
     const [description, setDescription] = useState('');
     const [selectedColor, setSelectedColor] = useState(availableColors[0]);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
     const router = useRouter();
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     const handleCreateClub = async () => {
         if (!clubName.trim() || !description.trim()) {
-            Alert.alert('Feil', 'Klubbnavn og beskrivelse kan ikke være tomme.');
+            showAlert('Feil', 'Klubbnavn og beskrivelse kan ikke være tomme.');
             return;
         }
 
         try {
             const userId = await AsyncStorage.getItem('userId');
-
             if (!userId) {
-                Alert.alert('Feil', 'Bruker ikke logget inn. Kan ikke opprette klubb.');
+                showAlert('Feil', 'Bruker ikke logget inn. Kan ikke opprette klubb.');
                 return;
             }
 
             const clubData = {
                 navn: clubName,
                 beskrivelse: description,
-                brukerId: userId, // 👈 sendes til backend
+                brukerId: userId,
                 følgere: [],
                 farge: selectedColor,
             };
@@ -54,13 +63,17 @@ export default function CreateKlubb() {
 
             setClubName('');
             setDescription('');
-            router.replace('/clubs');
+            showAlert('Suksess', 'Klubben ble opprettet!');
+
+            setTimeout(() => {
+                setAlertVisible(false);
+                router.replace('/clubs');
+            }, 1500);
         } catch (error: any) {
             console.error('Feil ved oppretting av klubb:', error.message);
-            Alert.alert('Feil', error.message);
+            showAlert('Feil', error.message);
         }
     };
-
 
     return (
         <SafeAreaView style={styles.container}>
@@ -107,6 +120,13 @@ export default function CreateKlubb() {
             <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
                 <Text style={styles.buttonText}>Avbryt</Text>
             </TouchableOpacity>
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+            />
 
             <BottomMenu />
         </SafeAreaView>

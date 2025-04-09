@@ -10,6 +10,7 @@ import Navbar from '@/components/Navigation/Navbar';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import PostCard from '@/components/Posts/PostCard';
 import { useRouter } from 'expo-router';
+import CustomAlert from '@/components/CustomAlert';
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../assets/avatars/avatar1.png'),
@@ -38,6 +39,9 @@ export default function Profile() {
     const [modalVisible, setModalVisible] = useState(false);
     const [activeTab, setActiveTab] = useState<'posts' | 'clubs'>('posts');
     const [followedClubs, setFollowedClubs] = useState<any[]>([]);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -51,6 +55,12 @@ export default function Profile() {
             }
         }, [userId])
     );
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     const loadProfileAndPosts = async () => {
         const id = await AsyncStorage.getItem('userId');
@@ -114,12 +124,13 @@ export default function Profile() {
                     })
             );
 
-            const sorted = userPosts.sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            const sorted = userPosts.sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
             setPosts(sorted);
         } catch (error) {
             console.error('Feil ved lasting av profil eller innlegg:', error);
+            showAlert("Feil", "Kunne ikke laste profil eller innlegg");
         }
     };
 
@@ -137,13 +148,13 @@ export default function Profile() {
             if (res.ok) {
                 setProfile((prev: any) => ({ ...prev, icon: newIcon }));
                 setModalVisible(false);
-                Alert.alert("Profilbilde oppdatert", `Du valgte ${newIcon}`);
+                showAlert("Profilbilde oppdatert", `Du valgte ${newIcon}`);
             } else {
-                Alert.alert("Feil", data?.error || "Ukjent feil");
+                showAlert("Feil", data?.error || "Ukjent feil");
             }
         } catch (err) {
             console.error('Kunne ikke oppdatere ikon:', err);
-            Alert.alert("Nettverksfeil", "Klarte ikke å koble til serveren");
+            showAlert("Nettverksfeil", "Klarte ikke å koble til serveren");
         }
     };
 
@@ -182,7 +193,7 @@ export default function Profile() {
                     showsVerticalScrollIndicator={false}
                 />
             ) : (
-                <ScrollView style={styles.clubList} contentContainerStyle={{ paddingBottom: 100 }}>
+                <ScrollView contentContainerStyle={styles.clubList}>
                     {followedClubs.map((club) => (
                         <View
                             key={club._id}
@@ -217,110 +228,49 @@ export default function Profile() {
                 </SafeAreaView>
             </Modal>
 
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+            />
+
             <BottomMenu />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#121212',
-        padding: 20,
-    },
-    profileHeader: {
-        alignItems: 'center',
-        marginBottom: 15,
-        marginTop: 12,
-    },
-    avatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        marginBottom: 10,
-    },
-    username: {
-        color: 'white',
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 12,
-    },
-    tabButtons: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: 12,
-    },
+    container: { flex: 1, backgroundColor: '#121212', padding: 20 },
+    profileHeader: { alignItems: 'center', marginBottom: 15, marginTop: 12 },
+    avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
+    username: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+    tabButtons: { flexDirection: 'row', justifyContent: 'center', marginBottom: 12 },
     tabButton: {
-        backgroundColor: '#333',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        marginHorizontal: 4,
-        borderRadius: 20,
+        backgroundColor: '#333', paddingVertical: 8,
+        paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
     },
-    activeTab: {
-        backgroundColor: '#4CAF50',
-    },
-    tabText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    list: {
-        paddingBottom: 80,
-    },
-    clubList: {
-        flex: 1,
-    },
-    clubCard: {
-        borderRadius: 10,
-        padding: 12,
-        marginVertical: 6,
-    },
-    clubName: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    clubDesc: {
-        color: 'white',
-        marginTop: 4,
-    },
+    activeTab: { backgroundColor: '#4CAF50' },
+    tabText: { color: 'white', fontWeight: 'bold' },
+    list: { paddingBottom: 80 },
+    clubList: { paddingBottom: 100 },
+    clubCard: { borderRadius: 10, padding: 12, marginVertical: 6 },
+    clubName: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+    clubDesc: { color: 'white', marginTop: 4 },
     exploreButton: {
-        backgroundColor: '#4CAF50',
-        marginTop: 20,
-        padding: 12,
-        borderRadius: 8,
-        alignItems: 'center',
+        backgroundColor: '#4CAF50', marginTop: 20,
+        padding: 12, borderRadius: 8, alignItems: 'center',
     },
-    exploreText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
+    exploreText: { color: 'white', fontWeight: 'bold' },
     avatarPicker: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        padding: 10,
+        flexDirection: 'row', flexWrap: 'wrap',
+        justifyContent: 'center', padding: 10,
     },
     avatarOption: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        margin: 5,
-        borderWidth: 2,
-        borderColor: 'transparent',
+        width: 50, height: 50, borderRadius: 25,
+        margin: 5, borderWidth: 2, borderColor: 'transparent',
     },
-    selectedAvatar: {
-        borderColor: 'white',
-    },
-    modalContainer: {
-        flex: 1,
-        backgroundColor: '#121212',
-        paddingTop: 30,
-    },
-    modalTitle: {
-        color: 'white',
-        fontSize: 18,
-        textAlign: 'center',
-        marginBottom: 10,
-    },
+    selectedAvatar: { borderColor: 'white' },
+    modalContainer: { flex: 1, backgroundColor: '#121212', paddingTop: 30 },
+    modalTitle: { color: 'white', fontSize: 18, textAlign: 'center', marginBottom: 10 },
 });

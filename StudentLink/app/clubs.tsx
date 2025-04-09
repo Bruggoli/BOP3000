@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import Navbar from '@/components/Navigation/Navbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CustomAlert from '@/components/CustomAlert';
 
 type Club = {
     _id: string;
@@ -29,6 +30,9 @@ export default function ClubsScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [userId, setUserId] = useState('');
     const [followedClubIds, setFollowedClubIds] = useState<string[]>([]);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -40,6 +44,12 @@ export default function ClubsScreen() {
             fetchClubs();
         }
     }, [userId]);
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     const loadUserId = async () => {
         const id = await AsyncStorage.getItem('userId');
@@ -59,6 +69,7 @@ export default function ClubsScreen() {
             setFollowedClubIds((profile?.følgerKlubber || []).map((id: any) => id.toString()));
         } catch (error) {
             console.error('Feil ved henting av klubber:', error);
+            showAlert("Feil", "Kunne ikke hente klubber.");
         } finally {
             setLoading(false);
         }
@@ -81,10 +92,11 @@ export default function ClubsScreen() {
             if (response.ok) {
                 fetchClubs(); // Oppdater liste etter endring
             } else {
-                console.error('❌ Klarte ikke å oppdatere følgerstatus');
+                showAlert("Feil", "Klarte ikke å oppdatere følgerstatus.");
             }
         } catch (error) {
             console.error('❌ Feil ved følgehandling:', error);
+            showAlert("Feil", "Noe gikk galt ved oppdatering.");
         }
     };
 
@@ -141,6 +153,13 @@ export default function ClubsScreen() {
             <TouchableOpacity style={styles.createButton} onPress={() => router.push('/create-klubb')}>
                 <Text style={styles.buttonText}>Lag ny Klubb</Text>
             </TouchableOpacity>
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+            />
 
             <BottomMenu />
         </SafeAreaView>

@@ -8,7 +8,7 @@ import {
     Text,
     Modal,
     Pressable,
-    ScrollView
+    ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import Navbar from '@/components/Navigation/Navbar';
 import PostCard from '@/components/Posts/PostCard';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import { FontAwesome } from '@expo/vector-icons';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function HomeScreen() {
     const [posts, setPosts] = useState<any[]>([]);
@@ -27,9 +28,19 @@ export default function HomeScreen() {
     const [activeFilter, setActiveFilter] = useState<string>('newfeed+følger');
     const [currentProfile, setCurrentProfile] = useState<any>(null);
 
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+
     useEffect(() => {
         loadData();
     }, [activeFilter]);
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     const handleRefresh = async () => {
         setRefreshing(true);
@@ -115,6 +126,7 @@ export default function HomeScreen() {
             setPosts(sorted);
         } catch (err) {
             console.error('Feil ved lasting av innlegg:', err);
+            showAlert('Feil', 'Kunne ikke laste innlegg. Prøv igjen senere.');
         }
     };
 
@@ -205,6 +217,13 @@ export default function HomeScreen() {
                         tintColor="white"
                     />
                 }
+            />
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
             />
 
             <BottomMenu />
