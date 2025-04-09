@@ -9,6 +9,6 @@ export default interface ModelsProfil {
     verified?: boolean;
     verifyToken?: string;
     medlemskap?: { klubbId: ObjectId; rolle: "Admin" | "Moderator" | "Medlem" }[]; // Liste over klubber brukeren er med i
-    følgerKlubber?: ObjectId[]; // 🔄 Nytt navn/felt
+    følgerKlubber?: ObjectId[];
 }
 
