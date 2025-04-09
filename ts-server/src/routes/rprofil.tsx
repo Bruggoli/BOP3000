@@ -37,7 +37,6 @@ profilRouter.post("/", async (req: Request, res: Response) => {
 
         const resultat = await collections.profiler.insertOne(nyProfil);
 
-        // Send verifikasjonsmail
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -58,10 +57,6 @@ profilRouter.post("/", async (req: Request, res: Response) => {
                    <a href="${verifyLink}">Bekreft e-posten</a>`,
         };
 
-        console.log("🔧 Prøver å sende e-post til:", email);
-        console.log("📨 Sender fra:", process.env.EMAIL_USER);
-        console.log("🔗 Verifikasjonslink:", verifyLink);
-
         transporter.sendMail(mailOptions, (err, info) => {
             if (err) {
                 console.error("❌ FEIL ved sending av e-post:", err);
@@ -69,7 +64,6 @@ profilRouter.post("/", async (req: Request, res: Response) => {
                 console.log("✅ Verifikasjonsmail sendt:", info.response);
             }
         });
-
 
         res.status(201).json({ message: "Profil opprettet! Bekreft e-posten din.", id: resultat.insertedId });
     } catch (error: any) {
@@ -84,36 +78,24 @@ profilRouter.get("/verify/:token", async (req: Request, res: Response) => {
 
     try {
         const bruker = await collections.profiler?.findOne({ verifyToken: token });
-        console.log("🔑 Bekrefter token:", token);
-        console.log("📦 Bruker funnet:", bruker);
 
         if (!bruker) {
-            // Kanskje brukeren allerede er bekreftet
             const alleredeBekreftet = await collections.profiler?.findOne({
                 verified: true,
                 verifyToken: { $exists: false },
             });
 
             if (alleredeBekreftet) {
-                console.log("ℹ️ Brukeren er allerede bekreftet.");
                 return res.send("✅ E-posten din er allerede bekreftet.");
             }
 
             return res.status(400).send("Ugyldig eller utløpt verifikasjonslenke.");
         }
 
-
         await collections.profiler?.updateOne(
             { _id: bruker._id },
             { $set: { verified: true }, $unset: { verifyToken: "" } }
         );
-        console.log("✅ Verifisert bruker med ID:", bruker._id);
-        console.log("✅ Verifisert og lagret:", {
-            email: bruker.email,
-            verified: true
-
-        });
-
 
         res.send("✅ E-posten er bekreftet! Du kan nå logge inn.");
     } catch (error) {
@@ -136,7 +118,7 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
     }
 });
 
-// Hent en spesifikk profil basert på ID
+// Hent en spesifikk profil
 // @ts-ignore
 profilRouter.get("/:id", async (req: Request, res: Response) => {
     try {
@@ -161,7 +143,7 @@ profilRouter.get("/:id", async (req: Request, res: Response) => {
     }
 });
 
-// Oppdater profilens ikon
+// Oppdater profilens ikon eller bio
 // @ts-ignore
 profilRouter.patch("/:id", async (req: Request, res: Response) => {
     try {
@@ -170,11 +152,23 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
         }
 
         const id = new ObjectId(req.params.id);
-        const { icon } = req.body;
+        const updates = req.body;
+
+        const allowedFields = ['icon', 'bio'];
+        const updateData: any = {};
+        allowedFields.forEach((field) => {
+            if (updates[field] !== undefined) {
+                updateData[field] = updates[field];
+            }
+        });
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: "Ingen gyldige felter å oppdatere" });
+        }
 
         const result = await collections.profiler.updateOne(
             { _id: id },
-            { $set: { icon } }
+            { $set: updateData }
         );
 
         if (result.modifiedCount === 0) {
@@ -187,11 +181,9 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
     }
 });
 
-// Login med sjekk av verifisering
+// Login
 // @ts-ignore
 profilRouter.post("/login", async (req: Request, res: Response) => {
-    console.log("🛂 Login request:", req.body);
-
     try {
         let { email, password } = req.body;
 
@@ -202,7 +194,6 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
         email = email.trim().toLowerCase();
 
         const user = await collections.profiler?.findOne({ email });
-        console.log("Bruker ved innlogging:", user);
 
         if (!user) {
             return res.status(401).json({ error: "Ugyldig e-post eller passord" });
@@ -217,8 +208,6 @@ profilRouter.post("/login", async (req: Request, res: Response) => {
         if (!isValid) {
             return res.status(401).json({ error: "Ugyldig e-post eller passord" });
         }
-        console.log("🔍 Bruker ved innlogging:", user);
-
 
         res.status(200).json({ userId: user._id });
     } catch (error: any) {

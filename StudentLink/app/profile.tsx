@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, Image, FlatList, StyleSheet, TouchableOpacity,
-    Modal, ScrollView, Alert
+    Modal, ScrollView, TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,6 +42,8 @@ export default function Profile() {
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
+    const [bioModalVisible, setBioModalVisible] = useState(false);
+    const [newBio, setNewBio] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -68,16 +70,14 @@ export default function Profile() {
         setUserId(id);
 
         try {
-            const [profileRes, allPostsRes, profileListRes, klubbRes] = await Promise.all([
+            const [profileRes, allPostsRes, klubbRes] = await Promise.all([
                 fetch(`http://10.0.2.2:3000/profil/${id}`),
                 fetch('http://10.0.2.2:3000/post'),
-                fetch('http://10.0.2.2:3000/profil'),
                 fetch('http://10.0.2.2:3000/klubb'),
             ]);
 
             const profileData = await profileRes.json();
             const allPosts = await allPostsRes.json();
-            const allProfiles = await profileListRes.json();
             const allClubs = await klubbRes.json();
 
             const brukerensKlubber = allClubs.filter((k: any) =>
@@ -134,29 +134,32 @@ export default function Profile() {
         }
     };
 
-    const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
+    const handleBioUpdate = async () => {
+        if (newBio.length > 150) {
+            showAlert("Bio er for lang", "Maks 150 tegn er tillatt.");
+            return;
+        }
 
-    const handleAvatarChange = async (newIcon: string) => {
         try {
             const res = await fetch(`http://10.0.2.2:3000/profil/${userId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ icon: newIcon }),
+                body: JSON.stringify({ bio: newBio }),
             });
 
-            const data = await res.json();
             if (res.ok) {
-                setProfile((prev: any) => ({ ...prev, icon: newIcon }));
-                setModalVisible(false);
-                showAlert("Profilbilde oppdatert", `Du valgte ${newIcon}`);
+                setProfile((prev: any) => ({ ...prev, bio: newBio }));
+                setBioModalVisible(false);
+                showAlert("Bio oppdatert", "Din bio er lagret.");
             } else {
-                showAlert("Feil", data?.error || "Ukjent feil");
+                showAlert("Feil", "Kunne ikke oppdatere bio");
             }
         } catch (err) {
-            console.error('Kunne ikke oppdatere ikon:', err);
-            showAlert("Nettverksfeil", "Klarte ikke å koble til serveren");
+            showAlert("Feil", "Ukjent feil oppstod");
         }
     };
+
+    const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -167,6 +170,15 @@ export default function Profile() {
                     <Image source={avatarSource} style={styles.avatar} />
                 </TouchableOpacity>
                 <Text style={styles.username}>{profile?.brukernavn || 'Ukjent'}</Text>
+
+                {profile?.bio && (
+                    <TouchableOpacity style={styles.bioContainer} onPress={() => {
+                        setNewBio(profile.bio);
+                        setBioModalVisible(true);
+                    }}>
+                        <Text style={styles.bioText}>{profile.bio}</Text>
+                    </TouchableOpacity>
+                )}
 
                 <View style={styles.tabButtons}>
                     <TouchableOpacity
@@ -184,48 +196,37 @@ export default function Profile() {
                 </View>
             </View>
 
-            {activeTab === 'posts' ? (
-                <FlatList
-                    data={posts}
-                    keyExtractor={(item) => item.postId}
-                    renderItem={({ item }) => <PostCard {...item} currentUserId={userId} />}
-                    contentContainerStyle={styles.list}
-                    showsVerticalScrollIndicator={false}
-                />
-            ) : (
-                <ScrollView contentContainerStyle={styles.clubList}>
-                    {followedClubs.map((club) => (
-                        <View
-                            key={club._id}
-                            style={[styles.clubCard, { backgroundColor: club.farge || '#607D8B' }]}
-                        >
-                            <Text style={styles.clubName}>{club.navn}</Text>
-                            <Text style={styles.clubDesc}>{club.beskrivelse}</Text>
-                        </View>
-                    ))}
-                    <TouchableOpacity style={styles.exploreButton} onPress={() => router.push('/clubs')}>
-                        <Text style={styles.exploreText}>Oppdag flere klubber</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            )}
+            <FlatList
+                data={posts}
+                keyExtractor={(item) => item.postId}
+                renderItem={({ item }) => <PostCard {...item} currentUserId={userId} />}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+            />
 
-            <Modal visible={modalVisible} animationType="slide">
-                <SafeAreaView style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>Velg et nytt profilbilde</Text>
-                    <ScrollView contentContainerStyle={styles.avatarPicker}>
-                        {Object.keys(avatarMap).map((iconName) => (
-                            <TouchableOpacity key={iconName} onPress={() => handleAvatarChange(iconName)}>
-                                <Image
-                                    source={avatarMap[iconName]}
-                                    style={[styles.avatarOption, iconName === profile?.icon && styles.selectedAvatar]}
-                                />
+            <Modal visible={bioModalVisible} animationType="slide" transparent>
+                <View style={styles.bioModalOverlay}>
+                    <View style={styles.bioModal}>
+                        <Text style={styles.modalTitle}>Rediger bio</Text>
+                        <TextInput
+                            style={styles.bioInput}
+                            multiline
+                            maxLength={150}
+                            value={newBio}
+                            onChangeText={setNewBio}
+                            placeholder="Skriv noe om deg selv..."
+                            placeholderTextColor="#aaa"
+                        />
+                        <View style={styles.bioModalButtons}>
+                            <TouchableOpacity onPress={handleBioUpdate} style={styles.saveButton}>
+                                <Text style={styles.saveButtonText}>Lagre</Text>
                             </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                    <TouchableOpacity onPress={() => setModalVisible(false)}>
-                        <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>Lukk</Text>
-                    </TouchableOpacity>
-                </SafeAreaView>
+                            <TouchableOpacity onPress={() => setBioModalVisible(false)}>
+                                <Text style={{ color: 'white', marginTop: 10 }}>Avbryt</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
             </Modal>
 
             <CustomAlert
@@ -244,7 +245,18 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#121212', padding: 20 },
     profileHeader: { alignItems: 'center', marginBottom: 15, marginTop: 12 },
     avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
-    username: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+    username: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 6 },
+    bioContainer: {
+        alignItems: 'center',
+        marginBottom: 12,
+        paddingHorizontal: 20,
+    },
+    bioText: {
+        color: '#ccc',
+        fontStyle: 'italic',
+        fontSize: 14,
+        textAlign: 'center',
+    },
     tabButtons: { flexDirection: 'row', justifyContent: 'center', marginBottom: 12 },
     tabButton: {
         backgroundColor: '#333', paddingVertical: 8,
@@ -252,25 +264,46 @@ const styles = StyleSheet.create({
     },
     activeTab: { backgroundColor: '#4CAF50' },
     tabText: { color: 'white', fontWeight: 'bold' },
-    list: { paddingBottom: 80 },
-    clubList: { paddingBottom: 100 },
-    clubCard: { borderRadius: 10, padding: 12, marginVertical: 6 },
-    clubName: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-    clubDesc: { color: 'white', marginTop: 4 },
-    exploreButton: {
-        backgroundColor: '#4CAF50', marginTop: 20,
-        padding: 12, borderRadius: 8, alignItems: 'center',
+    bioModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    exploreText: { color: 'white', fontWeight: 'bold' },
-    avatarPicker: {
-        flexDirection: 'row', flexWrap: 'wrap',
-        justifyContent: 'center', padding: 10,
+    bioModal: {
+        backgroundColor: '#1e1e1e',
+        padding: 20,
+        borderRadius: 12,
+        width: '90%',
     },
-    avatarOption: {
-        width: 50, height: 50, borderRadius: 25,
-        margin: 5, borderWidth: 2, borderColor: 'transparent',
+    modalTitle: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10,
     },
-    selectedAvatar: { borderColor: 'white' },
-    modalContainer: { flex: 1, backgroundColor: '#121212', paddingTop: 30 },
-    modalTitle: { color: 'white', fontSize: 18, textAlign: 'center', marginBottom: 10 },
+    bioInput: {
+        backgroundColor: '#2c2c2c',
+        color: 'white',
+        borderRadius: 8,
+        padding: 12,
+        minHeight: 100,
+        textAlignVertical: 'top',
+        marginTop: 10,
+    },
+    bioModalButtons: {
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    saveButton: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+    },
+    saveButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
 });
