@@ -12,10 +12,7 @@ export default function BottomMenu() {
     return (
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.menuContainer}>
-                <TouchableOpacity style={styles.button} onPress={() => {
-                    router.push('/')
-
-                }}>
+                <TouchableOpacity style={styles.button} onPress={() => router.push('/')}>
                     <Ionicons name="flame-outline" size={40} color="white" />
                 </TouchableOpacity>
 

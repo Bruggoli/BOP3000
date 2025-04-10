@@ -43,14 +43,16 @@ export default function PublicProfile() {
     const [profile, setProfile] = useState<any>(null);
     const [posts, setPosts] = useState<Post[]>([]);
 
+    const server = process.env.EXPO_PUBLIC_LOCALHOST;
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const profileRes = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/profil/${id}`);
+                const profileRes = await fetch(`${server}/profil/${id}`);
                 const profileData = await profileRes.json();
                 setProfile(profileData);
 
-                const postRes = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/post`);
+                const postRes = await fetch(`${server}/post`);
                 const allPosts = await postRes.json();
                 const userPosts = allPosts
                     .filter((post: Post) => post.brukerId === id)

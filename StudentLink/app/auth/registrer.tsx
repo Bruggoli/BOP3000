@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,21 +9,28 @@ export default function RegisterScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
     const router = useRouter();
+
+    const showAlert = (message: string) => {
+        setModalMessage(message);
+        setModalVisible(true);
+    };
 
     const handleRegister = async () => {
         if (!username || !email || !password || !confirmPassword) {
-            Alert.alert('Feil', 'Alle felt må fylles ut');
+            showAlert('Alle felt må fylles ut');
             return;
         }
 
         if (!email.endsWith('@usn.no')) {
-            Alert.alert('Feil', 'Du må bruke en @usn.no e-postadresse');
+            showAlert('Du må bruke en @usn.no e-postadresse');
             return;
         }
 
         if (password !== confirmPassword) {
-            Alert.alert('Feil', 'Passordene matcher ikke');
+            showAlert('Passordene matcher ikke');
             return;
         }
 
@@ -36,7 +43,7 @@ export default function RegisterScreen() {
         };
 
         try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/profil`, {
+            const response = await fetch('http://10.0.2.2:3000/profil', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(profil),
@@ -46,18 +53,20 @@ export default function RegisterScreen() {
             const userId = result.id;
 
             if (!userId) {
-                Alert.alert("Feil", "Bruker-ID mangler i respons");
+                showAlert("Bruker-ID mangler i respons");
                 return;
             }
 
-
             await AsyncStorage.setItem('userId', userId);
             await AsyncStorage.setItem('userToken', 'loggedIn');
-            Alert.alert("Suksess", "Bruker registrert! Bekreft e-posten din for å logge inn.");
-            router.replace('/auth/login');
+            showAlert("Bruker registrert! Bekreft e-posten din for å logge inn.");
+            setTimeout(() => {
+                setModalVisible(false);
+                router.replace('/auth/login');
+            }, 2000);
         } catch (err) {
             console.error("Registreringsfeil:", err);
-            Alert.alert('Feil', 'Kunne ikke registrere bruker.');
+            showAlert('Kunne ikke registrere bruker.');
         }
     };
 
@@ -97,6 +106,22 @@ export default function RegisterScreen() {
             <TouchableOpacity onPress={() => router.push('/auth/login')} style={styles.link}>
                 <Text style={styles.linkText}>Har du allerede en konto? Logg inn</Text>
             </TouchableOpacity>
+
+            <Modal
+                visible={modalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.alertBox}>
+                        <Text style={styles.alertText}>{modalMessage}</Text>
+                        <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.alertButton}>
+                            <Text style={styles.alertButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -139,5 +164,34 @@ const styles = StyleSheet.create({
     },
     linkText: {
         color: '#29B6F6',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    alertBox: {
+        backgroundColor: '#222',
+        padding: 25,
+        borderRadius: 10,
+        width: '80%',
+        alignItems: 'center',
+    },
+    alertText: {
+        color: 'white',
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    alertButton: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 6,
+    },
+    alertButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });

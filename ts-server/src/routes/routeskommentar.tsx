@@ -1,7 +1,7 @@
 import express from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import MKommentar from "../models/mKommentar";
+import MKommentar from "../models/modelsKommentar";
 
 export const kommentarRouter = express.Router();
 

@@ -1,7 +1,7 @@
 import express from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import MPost from "../models/mPost";
+import ModelsPost from "../models/modelsPost";
 
 export const postRouter = express.Router();
 
@@ -13,9 +13,7 @@ postRouter.post("/", async (req, res) => {
             return res.status(500).send("Database collection not initialized");
         }
 
-        console.log(req.body);
-
-        const nyttPost: MPost = {
+        const nyttPost: ModelsPost = {
             ...req.body,
             brukerId: new ObjectId(req.body.brukerId),
             opprettet: new Date(),

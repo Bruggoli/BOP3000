@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-export default interface MKommentar {
+export default interface ModelsKommentar {
     _id?: ObjectId;
     postId: ObjectId;
     brukerId: ObjectId;

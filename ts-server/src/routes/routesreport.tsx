@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import MReport from "../models/mReport";
+import ModelsReport from "../models/modelsReport";
 
 export const reportRouter = express.Router();
 
@@ -15,7 +15,7 @@ reportRouter.post("/", async (req: Request, res: Response) => {
 
         const { postId, reportedBy, reason } = req.body;
 
-        const nyRapport: MReport = {
+        const nyRapport: ModelsReport = {
             postId: new ObjectId(postId),
             reportedBy: new ObjectId(reportedBy),
             reason,
