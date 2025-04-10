@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Navbar from '@/components/Navigation/Navbar';
 import PostCard from '@/components/Posts/PostCard';
-import { useLocation } from "@/hooks/useLocation";
+import { ASIsWithinCampus } from "@/hooks/useLocation";
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import { Router, useRouter } from "expo-router";
 
@@ -13,16 +13,19 @@ export default function HomeScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState('');
     const [profiles, setProfiles] = useState<any[]>([]);
-    // @ts-ignore
-    const { location, isWithin } = useState(useLocation());
     const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
+    const [location, setLocation] = useState<string>('ukjent');
 
     useEffect(() => {
         loadData();
     }, []);
 
+
     const loadData = async () => {
+        //TODO: denne burde kun godta en user-id
+        // hvis den ikke finner noe må den sende deg til login-siden
         const storedUserId = await AsyncStorage.getItem('userId');
+        setLocation(await ASIsWithinCampus() ? "Campus Bø": "Ikke Campus Bø");
         setUserId(storedUserId || '');
 
         try {
