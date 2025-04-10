@@ -1,18 +1,27 @@
 import { Slot } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useColorScheme, View, StyleSheet } from 'react-native';
+import { useColorScheme, View, StyleSheet, Text } from 'react-native';
 import BottomMenu from '@/components/Navigation/BottomMenu';
-import { LocationComp } from '@/components/LocationComp';
+import locationCheck from '@/hooks/useLocationCheck';
+import { useLocation } from '@/hooks/useLocation';
 import {useState} from "react";
 
 export default function RootLayout() {
-    // kaller på location-comp for å sjekke om permission er gitt
-    // LocationComp();
 
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
+    const [ isLocationValid, isLoading ] = locationCheck();
 
-
+    if (isLoading) {
+        return (
+            <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+                <View style={styles.container}>
+                    <BottomMenu />
+                </View>
+            </ThemeProvider>
+        )
+    }
+    if (isLocationValid) {
     return (
         <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
             <View style={styles.container}>
@@ -21,10 +30,23 @@ export default function RootLayout() {
             </View>
         </ThemeProvider>
     );
+    } else {
+        return (
+        <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+            <View style={styles.container}>
+                <Text style={styles.text}>Du er utenfor sonen</Text>
+                <BottomMenu />
+            </View>
+        </ThemeProvider>
+        )
+    }
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    text: {
+        textShadowColor: '#fff',
+    }
 });

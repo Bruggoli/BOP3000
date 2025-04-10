@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Navbar from '@/components/Navigation/Navbar';
 import PostCard from '@/components/Posts/PostCard';
-import { LocationComp } from "@/components/LocationComp";
+import { useLocation } from "@/hooks/useLocation";
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import { Router, useRouter } from "expo-router";
 
@@ -14,7 +14,7 @@ export default function HomeScreen() {
     const [userId, setUserId] = useState('');
     const [profiles, setProfiles] = useState<any[]>([]);
     // @ts-ignore
-    const { location, isWithin } = useState(LocationComp());
+    const { location, isWithin } = useState(useLocation());
     const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
 
     useEffect(() => {
