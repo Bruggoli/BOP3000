@@ -13,6 +13,8 @@ postRouter.post("/", async (req, res) => {
             return res.status(500).send("Database collection not initialized");
         }
 
+        console.log(req.body);
+
         const nyttPost: MPost = {
             ...req.body,
             brukerId: new ObjectId(req.body.brukerId),

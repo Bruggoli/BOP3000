@@ -37,7 +37,7 @@ export function useLocation() {
                 console.log("henter posisjon");
                 startTime = performance.now();
                 const location = await Location.getCurrentPositionAsync({
-                    accuracy: Location.Accuracy.Balanced
+                    accuracy: Location.Accuracy.High
                 });
                 endTime = performance.now();
                 console.log("ferdig å hente posisjon, tid brukt: " + (endTime - startTime));
@@ -55,12 +55,13 @@ export function useLocation() {
                 const withinDistanceCheck: boolean = distance <= MAX_DISTANCE_KM;
                 setIsWithinCampus(withinDistanceCheck);
 
-                if (!isWithinCampus) {
-                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus. Maks-grense er ${MAX_DISTANCE_KM}km.
+
+                console.log(isWithinCampus);
+                if (isWithinCampus) {setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus.
                     Din posisjon: ${location.coords.latitude}, ${location.coords.longitude}
                     Campus: ${CAMPUS_BO_LAT}, ${CAMPUS_BO_LONG}`);
                 } else {
-                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus.
+                    setLocationStatus(`Du er ${distance.toFixed(1)}km fra campus. Maks-grense er ${MAX_DISTANCE_KM}km.
                     Din posisjon: ${location.coords.latitude}, ${location.coords.longitude}
                     Campus: ${CAMPUS_BO_LAT}, ${CAMPUS_BO_LONG}`);
                 }

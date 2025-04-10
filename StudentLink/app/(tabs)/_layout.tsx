@@ -20,26 +20,28 @@ export default function RootLayout() {
                 </View>
             </ThemeProvider>
         )
-    }
-    if (isLocationValid) {
-    return (
-        <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-            <View style={styles.container}>
-                <Slot />
-                <BottomMenu />
-            </View>
-        </ThemeProvider>
-    );
     } else {
-        return (
-        <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-            <View style={styles.container}>
-                <Text style={styles.text}>Du er utenfor sonen</Text>
-                <BottomMenu />
-            </View>
-        </ThemeProvider>
-        )
+        if (isLocationValid) {
+            return (
+                <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+                    <View style={styles.container}>
+                        <Slot />
+                        <BottomMenu />
+                    </View>
+                </ThemeProvider>
+            );
+        } else {
+            return (
+                <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+                    <View style={styles.container}>
+                        <Text style={styles.text}>Du er utenfor sonen</Text>
+                        <BottomMenu />
+                    </View>
+                </ThemeProvider>
+            )
+        }
     }
+
 }
 
 const styles = StyleSheet.create({
