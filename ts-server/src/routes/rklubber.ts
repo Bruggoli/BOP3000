@@ -5,10 +5,12 @@ import { collections } from "../services/conn";
 export const klubberRouter: Router = express.Router();
 
 // Hent alle klubber eller søk etter en klubb
-// @ts-ignore
-klubberRouter.get("/", async (req: Request, res: Response) => {
+klubberRouter.get("/", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
-        if (!collections.klubber) return res.status(500).send("Database collection not initialized");
+        if (!collections.klubber) {
+            res.status(500).send("Database collection not initialized");
+            return;
+        }
 
         const searchQuery = req.query.q as string;
         let filter = {};
@@ -25,17 +27,18 @@ klubberRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // ✅ Opprett en ny klubb og legg til som følger
-// @ts-ignore
-klubberRouter.post("/", async (req: Request, res: Response) => {
+klubberRouter.post("/", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.klubber || !collections.profiler) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const { brukerId, navn, beskrivelse, farge } = req.body;
 
         if (!brukerId || !navn || !beskrivelse || !farge) {
-            return res.status(400).send("Mangler brukerId, navn, beskrivelse eller farge");
+            res.status(400).send("Mangler brukerId, navn, beskrivelse eller farge");
+            return;
         }
 
         const brukerObjectId = new ObjectId(brukerId);
@@ -44,7 +47,7 @@ klubberRouter.post("/", async (req: Request, res: Response) => {
             admin: brukerObjectId,
             navn,
             beskrivelse,
-            følgere: [brukerObjectId], // 👈 automatisk følger
+            følgere: [brukerObjectId], // Automatically follow
             farge,
             opprettet: new Date(),
         };
@@ -66,15 +69,19 @@ klubberRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // Følg en klubb
-// @ts-ignore
-klubberRouter.post("/folg", async (req: Request, res: Response) => {
+klubberRouter.post("/folg", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         const { brukerId, klubbId } = req.body;
         console.log("📥 Følg forespørsel mottatt:", { brukerId, klubbId });
 
-        if (!brukerId || !klubbId) return res.status(400).send("Mangler brukerId eller klubbId");
+        if (!brukerId || !klubbId) {
+            res.status(400).send("Mangler brukerId eller klubbId");
+            return;
+        }
+
         if (!ObjectId.isValid(brukerId) || !ObjectId.isValid(klubbId)) {
-            return res.status(400).send("Ugyldig ID-format");
+            res.status(400).send("Ugyldig ID-format");
+            return;
         }
 
         const brukerObjectId = new ObjectId(brukerId);
@@ -83,8 +90,15 @@ klubberRouter.post("/folg", async (req: Request, res: Response) => {
         const klubb = await collections.klubber?.findOne({ _id: klubbObjectId });
         const bruker = await collections.profiler?.findOne({ _id: brukerObjectId });
 
-        if (!klubb) return res.status(404).send("Klubb ikke funnet");
-        if (!bruker) return res.status(404).send("Bruker ikke funnet");
+        if (!klubb) {
+            res.status(404).send("Klubb ikke funnet");
+            return;
+        }
+
+        if (!bruker) {
+            res.status(404).send("Bruker ikke funnet");
+            return;
+        }
 
         console.log("➡️ Oppdaterer klubbens følgere...");
         const klubbUpdate = await collections.klubber?.updateOne(
@@ -101,7 +115,8 @@ klubberRouter.post("/folg", async (req: Request, res: Response) => {
         console.log("📦 brukerUpdate:", brukerUpdate);
 
         if (klubbUpdate?.modifiedCount === 0 && brukerUpdate?.modifiedCount === 0) {
-            return res.status(500).send("Ingen dokumenter ble oppdatert");
+            res.status(500).send("Ingen dokumenter ble oppdatert");
+            return;
         }
 
         console.log(`✅ ${brukerId} følger nå ${klubbId}`);
@@ -112,15 +127,14 @@ klubberRouter.post("/folg", async (req: Request, res: Response) => {
     }
 });
 
-// Slutt å følge
 // Slutt å følge en klubb
-// @ts-ignore
-klubberRouter.post("/sluttfolg", async (req: Request, res: Response) => {
+klubberRouter.post("/sluttfolg", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         const { brukerId, klubbId } = req.body;
 
         if (!ObjectId.isValid(brukerId) || !ObjectId.isValid(klubbId)) {
-            return res.status(400).send("Ugyldig ID-format");
+            res.status(400).send("Ugyldig ID-format");
+            return;
         }
 
         const brukerObjectId = new ObjectId(brukerId);
@@ -150,6 +164,5 @@ klubberRouter.post("/sluttfolg", async (req: Request, res: Response) => {
         console.error("❌ Feil i /sluttfolg:", error.message);
         res.status(500).json({ error: error.message });
     }
-    // burde overføre admin posisjon til neste i reken
 });
 

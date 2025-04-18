@@ -6,11 +6,11 @@ import ModelsReport from "../models/modelsReport";
 export const reportRouter = express.Router();
 
 // Opprett en ny rapport
-// @ts-ignore
-reportRouter.post("/", async (req: Request, res: Response) => {
+reportRouter.post("/", async (req: Request, res: Response): Promise<void> => {
     try {
         if (!collections.reports) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const { postId, reportedBy, reason } = req.body;
@@ -30,11 +30,11 @@ reportRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // Hent alle rapporter
-// @ts-ignore
-reportRouter.get("/", async (_req: Request, res: Response) => {
+reportRouter.get("/", async (_req: Request, res: Response): Promise<void> => {
     try {
         if (!collections.reports) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const rapporter = await collections.reports.find({}).toArray();

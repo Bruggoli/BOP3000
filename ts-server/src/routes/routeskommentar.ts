@@ -6,11 +6,11 @@ import MKommentar from "../models/modelsKommentar";
 export const kommentarRouter = express.Router();
 
 // Opprett en ny kommentar
-// @ts-ignore
-kommentarRouter.post("/", async (req, res) => {
+kommentarRouter.post("/", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.kommentar) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const nyKommentar: MKommentar = {
@@ -29,11 +29,11 @@ kommentarRouter.post("/", async (req, res) => {
 });
 
 // Hent alle kommentarer for et innlegg
-// @ts-ignore
-kommentarRouter.get("/post/:postId", async (req, res) => {
+kommentarRouter.get("/post/:postId", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.kommentar) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const postId = new ObjectId(req.params.postId);
@@ -45,11 +45,11 @@ kommentarRouter.get("/post/:postId", async (req, res) => {
 });
 
 // Like/unlike en kommentar
-// @ts-ignore
-kommentarRouter.patch("/:id/like", async (req, res) => {
+kommentarRouter.patch("/:id/like", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.kommentar) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const kommentarId = new ObjectId(req.params.id);
@@ -57,7 +57,8 @@ kommentarRouter.patch("/:id/like", async (req, res) => {
 
         const kommentar = await collections.kommentar.findOne({ _id: kommentarId });
         if (!kommentar) {
-            return res.status(404).json({ error: "Kommentar ikke funnet" });
+            res.status(404).json({ error: "Kommentar ikke funnet" });
+            return;
         }
 
         const harLikt = (kommentar.likes || []).some((id: any) => id.toString() === brukerId.toString());
