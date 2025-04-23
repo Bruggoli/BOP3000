@@ -18,7 +18,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         try {
-            const response = await fetch('http://10.0.2.2:3000/profil/login', {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/profil/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),

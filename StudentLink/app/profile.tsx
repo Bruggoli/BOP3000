@@ -37,6 +37,7 @@ export default function Profile() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
+    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
     const [activeTab, setActiveTab] = useState<'posts' | 'clubs'>('posts');
     const [followedClubs, setFollowedClubs] = useState<any[]>([]);
     const [alertVisible, setAlertVisible] = useState(false);
@@ -69,10 +70,10 @@ export default function Profile() {
 
         try {
             const [profileRes, allPostsRes, profileListRes, klubbRes] = await Promise.all([
-                fetch(`http://10.0.2.2:3000/profil/${id}`),
-                fetch('http://10.0.2.2:3000/post'),
-                fetch('http://10.0.2.2:3000/profil'),
-                fetch('http://10.0.2.2:3000/klubb'),
+                fetch(`${server}/profil/${id}`),
+                fetch(`${server}/post`),
+                fetch(`${server}/profil`),
+                fetch(`${server}/klubb`),
             ]);
 
             const profileData = await profileRes.json();
@@ -95,7 +96,7 @@ export default function Profile() {
                 allPosts
                     .filter((post: any) => post.brukerId === id)
                     .map(async (post: any) => {
-                        const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
+                        const commentRes = await fetch(`${server}/kommentar/post/${post._id}`);
                         const commentList = await commentRes.json();
 
                         const createdAt = new Date(post.opprettet);
@@ -138,7 +139,7 @@ export default function Profile() {
 
     const handleAvatarChange = async (newIcon: string) => {
         try {
-            const res = await fetch(`http://10.0.2.2:3000/profil/${userId}`, {
+            const res = await fetch(`${server}/profil/${userId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ icon: newIcon }),

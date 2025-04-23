@@ -1,7 +1,6 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import ModelsProfil from "../models/modelsProfil";
 import bcrypt from "bcrypt";
 import crypto from "crypto";

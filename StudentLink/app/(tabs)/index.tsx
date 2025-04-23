@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '@/components/Navigation/Navbar';
 import PostCard from '@/components/Posts/PostCard';
+import { ASIsWithinCampus } from "@/hooks/useLocation";
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import { FontAwesome } from '@expo/vector-icons';
 import CustomAlert from '@/components/CustomAlert';
@@ -22,6 +23,8 @@ export default function HomeScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState('');
     const [profiles, setProfiles] = useState<any[]>([]);
+    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
+    const [location, setLocation] = useState<string>('ukjent');
     const [refreshing, setRefreshing] = useState(false);
     const [klubber, setKlubber] = useState<any[]>([]);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -49,14 +52,17 @@ export default function HomeScreen() {
     };
 
     const loadData = async () => {
+        //TODO: denne burde kun godta en user-id
+        // hvis den ikke finner noe må den sende deg til login-siden
         const storedUserId = await AsyncStorage.getItem('userId');
+        setLocation(await ASIsWithinCampus() ? "Campus Bø": "Ikke Campus Bø");
         setUserId(storedUserId || '');
 
         try {
             const [postRes, profileRes, klubbRes] = await Promise.all([
-                fetch('http://10.0.2.2:3000/post'),
-                fetch('http://10.0.2.2:3000/profil'),
-                fetch('http://10.0.2.2:3000/klubb'),
+                fetch(server + '/post'),
+                fetch(server + '/profil'),
+                fetch(server + '/klubb'),
             ]);
 
             const postList = await postRes.json();
@@ -92,7 +98,7 @@ export default function HomeScreen() {
 
             const postsWithUser = await Promise.all(
                 filteredPosts.map(async (post: any) => {
-                    const commentRes = await fetch(`http://10.0.2.2:3000/kommentar/post/${post._id}`);
+                    const commentRes = await fetch(`${server}/kommentar/post/${post._id}`);
                     const commentList = await commentRes.json();
                     const klubb = klubbMap[post.klubbId];
 
@@ -126,7 +132,6 @@ export default function HomeScreen() {
             setPosts(sorted);
         } catch (err) {
             console.error('Feil ved lasting av innlegg:', err);
-            showAlert('Feil', 'Kunne ikke laste innlegg. Prøv igjen senere.');
         }
     };
 

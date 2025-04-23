@@ -32,6 +32,7 @@ export default function CommentScreen() {
 
     const [commentSuccess, setCommentSuccess] = useState(false);
     const successAnim = useState(new Animated.Value(0))[0];
+    const server = process.env.EXPO_PUBLIC_LOCALHOST;
 
     useEffect(() => {
         loadData();
@@ -66,10 +67,10 @@ export default function CommentScreen() {
             setUserId(storedUserId || '');
 
             const [postRes, commentsRes, profilesRes, klubbRes] = await Promise.all([
-                fetch(`http://10.0.2.2:3000/post/${postId}`),
-                fetch(`http://10.0.2.2:3000/kommentar/post/${postId}`),
-                fetch('http://10.0.2.2:3000/profil'),
-                fetch('http://10.0.2.2:3000/klubb'),
+                fetch(`${server}/post/${postId}`),
+                fetch(`${server}/kommentar/post/${postId}`),
+                fetch(`${server}/profil`),
+                fetch(`${server}/klubb`),
             ]);
 
             const postData = await postRes.json();
@@ -145,7 +146,7 @@ export default function CommentScreen() {
         if (!newComment.trim()) return;
 
         try {
-            const response = await fetch('http://10.0.2.2:3000/kommentar', {
+            const response = await fetch(`${server}/kommentar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

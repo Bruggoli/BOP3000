@@ -50,7 +50,7 @@ export default function CreateKlubb() {
                 farge: selectedColor,
             };
 
-            const response = await fetch('http://10.0.2.2:3000/klubb', {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/klubb`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(clubData),

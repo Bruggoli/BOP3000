@@ -13,6 +13,8 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+const server = process.env.LOCALHOST;
+
 
 // Middleware for JSON-parsing
 app.use(cors());
@@ -38,7 +40,7 @@ connectToDb()
 
         // @ts-ignore
         app.listen(port, '127.0.0.1', () => {
-            console.log(`🚀 Server kjører på http://127.0.0.1:${port}`);
+            console.log(`🚀Server kjører på ${server}:${port}`);
         });
     })
     .catch((error: Error) => {
