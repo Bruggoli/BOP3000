@@ -77,7 +77,9 @@ export function useLocation() {
                     parseFloat(CAMPUS_BO_LONG)
                 );
                 const withinDistanceCheck: boolean = distance <= MAX_DISTANCE_KM;
+                console.log("assertIsString: ");
                 setIsWithinCampus(withinDistanceCheck);
+                console.log("assertIsString: ");
                 ASSetIsWithinCampus(withinDistanceCheck);
 
                 if (withinDistanceCheck) {

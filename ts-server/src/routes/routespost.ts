@@ -6,11 +6,11 @@ import ModelsPost from "../models/modelsPost";
 export const postRouter = express.Router();
 
 // Opprett et nytt innlegg
-// @ts-ignore
-postRouter.post("/", async (req, res) => {
+postRouter.post("/", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.poster) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const nyttPost: ModelsPost = {
@@ -30,11 +30,11 @@ postRouter.post("/", async (req, res) => {
 });
 
 // Hent alle innlegg
-// @ts-ignore
-postRouter.get("/", async (_req, res) => {
+postRouter.get("/", async (_req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.poster) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const poster = await collections.poster.find({}).toArray();
@@ -45,31 +45,32 @@ postRouter.get("/", async (_req, res) => {
 });
 
 // Hent ett spesifikt innlegg
-// @ts-ignore
-postRouter.get("/:id", async (req, res) => {
+postRouter.get("/:id", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.poster) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const post = await collections.poster.findOne({ _id: new ObjectId(req.params.id) });
 
         if (!post) {
-            return res.status(404).json({ error: "Innlegg ikke funnet" });
+            res.status(404).json({ error: "Innlegg ikke funnet" });
+            return;
         }
 
         res.status(200).json(post);
-    } catch (error) {
+    } catch (error: any) {
         res.status(400).json({ error: "Ugyldig ID-format" });
     }
 });
 
 // Like/unlike et innlegg
-// @ts-ignore
-postRouter.patch("/:id/like", async (req, res) => {
+postRouter.patch("/:id/like", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.poster) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const postId = new ObjectId(req.params.id);
@@ -77,7 +78,8 @@ postRouter.patch("/:id/like", async (req, res) => {
 
         const post = await collections.poster.findOne({ _id: postId });
         if (!post) {
-            return res.status(404).json({ error: "Post ikke funnet" });
+            res.status(404).json({ error: "Post ikke funnet" });
+            return;
         }
 
         // 🔧 Sammenlign som string for å unngå .equals-feil

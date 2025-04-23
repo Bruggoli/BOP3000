@@ -8,18 +8,19 @@ import nodemailer from "nodemailer";
 
 export const profilRouter = express.Router();
 
-// Opprett en ny profil
-// @ts-ignore
-profilRouter.post("/", async (req: Request, res: Response) => {
+// oppretter en profil
+profilRouter.post("/", async (req: Request, res: Response): Promise<void> => {
     try {
         if (!collections.profiler) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const { username, password, email, icon, medlemskap } = req.body;
 
         if (!email.endsWith("@usn.no")) {
-            return res.status(400).json({ error: "Kun @usn.no-adresser er tillatt" });
+            res.status(400).json({ error: "Kun @usn.no-adresser er tillatt" });
+            return;
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -37,7 +38,6 @@ profilRouter.post("/", async (req: Request, res: Response) => {
 
         const resultat = await collections.profiler.insertOne(nyProfil);
 
-        // Send verifikasjonsmail
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -58,10 +58,6 @@ profilRouter.post("/", async (req: Request, res: Response) => {
                    <a href="${verifyLink}">Bekreft e-posten</a>`,
         };
 
-        console.log("🔧 Prøver å sende e-post til:", email);
-        console.log("📨 Sender fra:", process.env.EMAIL_USER);
-        console.log("🔗 Verifikasjonslink:", verifyLink);
-
         transporter.sendMail(mailOptions, (err, info) => {
             if (err) {
                 console.error("❌ FEIL ved sending av e-post:", err);
@@ -70,7 +66,6 @@ profilRouter.post("/", async (req: Request, res: Response) => {
             }
         });
 
-
         res.status(201).json({ message: "Profil opprettet! Bekreft e-posten din.", id: resultat.insertedId });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
@@ -78,8 +73,7 @@ profilRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // Verifiser e-post
-// @ts-ignore
-profilRouter.get("/verify/:token", async (req: Request, res: Response) => {
+profilRouter.get("/verify/:token", async (req: Request, res: Response): Promise<void> => {
     const { token } = req.params;
 
     try {
@@ -88,7 +82,6 @@ profilRouter.get("/verify/:token", async (req: Request, res: Response) => {
         console.log("📦 Bruker funnet:", bruker);
 
         if (!bruker) {
-            // Kanskje brukeren allerede er bekreftet
             const alleredeBekreftet = await collections.profiler?.findOne({
                 verified: true,
                 verifyToken: { $exists: false },
@@ -96,25 +89,20 @@ profilRouter.get("/verify/:token", async (req: Request, res: Response) => {
 
             if (alleredeBekreftet) {
                 console.log("ℹ️ Brukeren er allerede bekreftet.");
-                return res.send("✅ E-posten din er allerede bekreftet.");
+                res.send("✅ E-posten din er allerede bekreftet.");
+                return;
             }
 
-            return res.status(400).send("Ugyldig eller utløpt verifikasjonslenke.");
+            res.status(400).send("Ugyldig eller utløpt verifikasjonslenke.");
+            return;
         }
-
 
         await collections.profiler?.updateOne(
             { _id: bruker._id },
             { $set: { verified: true }, $unset: { verifyToken: "" } }
         );
+
         console.log("✅ Verifisert bruker med ID:", bruker._id);
-        console.log("✅ Verifisert og lagret:", {
-            email: bruker.email,
-            verified: true
-
-        });
-
-
         res.send("✅ E-posten er bekreftet! Du kan nå logge inn.");
     } catch (error) {
         res.status(500).send("Noe gikk galt under verifisering.");
@@ -122,11 +110,11 @@ profilRouter.get("/verify/:token", async (req: Request, res: Response) => {
 });
 
 // Hent alle profiler
-// @ts-ignore
-profilRouter.get("/", async (_req: Request, res: Response) => {
+profilRouter.get("/", async (_req: Request, res: Response): Promise<void> => {
     try {
         if (!collections.profiler) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const profiler = await collections.profiler.find({}).toArray();
@@ -137,22 +125,23 @@ profilRouter.get("/", async (_req: Request, res: Response) => {
 });
 
 // Hent bruker basert på ID
-// @ts-ignore
-profilRouter.get("/:id", async (req: Request, res: Response) => {
+profilRouter.get("/:id", async (req: Request, res: Response): Promise<void> => {
     try {
         if (!collections.profiler) {
-            return res.status(500).send("Database collection ikke tilgjengelig");
+            res.status(500).send("Database collection ikke tilgjengelig");
+            return;
         }
 
         const id = new ObjectId(req.params.id);
         const profil = await collections.profiler.findOne({ _id: id });
 
         if (!profil) {
-            return res.status(404).send("Profil ikke funnet");
+            res.status(404).send("Profil ikke funnet");
+            return;
         }
 
         res.status(200).json(profil);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof Error) {
             res.status(400).send("Ugyldig ID-format");
         } else {
@@ -163,11 +152,11 @@ profilRouter.get("/:id", async (req: Request, res: Response) => {
 
 
 // Oppdater profilens ikon
-// @ts-ignore
-profilRouter.patch("/:id", async (req: Request, res: Response) => {
+profilRouter.patch("/:id", async (req: Request, res: Response): Promise<void> => {
     try {
         if (!collections.profiler) {
-            return res.status(500).send("Database collection not initialized");
+            res.status(500).send("Database collection not initialized");
+            return;
         }
 
         const id = new ObjectId(req.params.id);
@@ -179,7 +168,8 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
         );
 
         if (result.modifiedCount === 0) {
-            return res.status(404).send("Profil ikke oppdatert");
+            res.status(404).send("Profil ikke oppdatert");
+            return;
         }
 
         res.status(200).json({ message: "Profil oppdatert" });
@@ -188,13 +178,15 @@ profilRouter.patch("/:id", async (req: Request, res: Response) => {
     }
 });
 
-// @ts-ignore
 // Slett en brukerprofil og relaterte data
-profilRouter.delete("/:id", async (req: Request, res: Response) => {
+profilRouter.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     try {
         const { profiler, kommentar, poster, klubber } = collections;
 
-        if (!profiler) return res.status(500).send("Profil-collection ikke tilgjengelig");
+        if (!profiler) {
+            res.status(500).send("Profil-collection ikke tilgjengelig");
+            return;
+        }
 
         const id = new ObjectId(req.params.id);
         const slettKommentarer = req.query.slettKommentarer === "true";
@@ -229,7 +221,8 @@ profilRouter.delete("/:id", async (req: Request, res: Response) => {
         const resultat = await profiler.deleteOne({ _id: id });
 
         if (resultat.deletedCount === 0) {
-            return res.status(404).send("Fant ikke bruker å slette.");
+            res.status(404).send("Fant ikke bruker å slette.");
+            return;
         }
 
         res.status(200).send("✅ Bruker og valgte data slettet.");
@@ -241,39 +234,42 @@ profilRouter.delete("/:id", async (req: Request, res: Response) => {
 
 
 // Login med sjekk av verifisering
-// @ts-ignore
-profilRouter.post("/login", async (req: Request, res: Response) => {
+profilRouter.post("/login", async (req: Request, res: Response): Promise<void> => {
     console.log("🛂 Login route triggered");
     console.log("📦 req.headers:", req.headers);
-    console.log("📦 req.body:", req.body); // 👈 denne er viktigst
+    console.log("📦 req.body:", req.body);
 
     try {
         let { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ error: "E-post og passord må fylles ut" });
+            res.status(400).json({ error: "E-post og passord må fylles ut" });
+            return;
         }
 
         email = email.trim();
 
         const user = await collections.profiler?.findOne({
-            email: { $regex: `^${email}$`, $options: "i" } // 👈 søk uavhengig av store/små bokstaver
+            email: { $regex: `^${email}$`, $options: "i" }
         });
 
         console.log("🔍 Bruker funnet:", user);
 
         if (!user) {
-            return res.status(401).json({ error: "Ugyldig e-post eller passord" });
+            res.status(401).json({ error: "Ugyldig e-post eller passord" });
+            return;
         }
 
         if (!user.verified) {
-            return res.status(401).json({ error: "E-posten er ikke bekreftet." });
+            res.status(401).json({ error: "E-posten er ikke bekreftet." });
+            return;
         }
 
         const isValid = await bcrypt.compare(password, user.passord);
 
         if (!isValid) {
-            return res.status(401).json({ error: "Ugyldig e-post eller passord" });
+            res.status(401).json({ error: "Ugyldig e-post eller passord" });
+            return;
         }
 
         res.status(200).json({ userId: user._id });
