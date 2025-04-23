@@ -23,7 +23,7 @@ export default function HomeScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState('');
     const [profiles, setProfiles] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true); // 👈 ny state
+    const [isLoading, setIsLoading] = useState(true);
 
     const router = useRouter();
     const [refreshing, setRefreshing] = useState(false);
@@ -36,6 +36,12 @@ export default function HomeScreen() {
     const [alertTitle, setAlertTitle] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
 
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
+
     useEffect(() => {
         const init = async () => {
             const storedUserId = await AsyncStorage.getItem('userId');
@@ -45,28 +51,20 @@ export default function HomeScreen() {
             }
             setIsLoading(false);
         };
-
         init();
     }, []);
-        loadData();
-    }, [activeFilter]);
 
-    const showAlert = (title: string, message: string) => {
-        setAlertTitle(title);
-        setAlertMessage(message);
-        setAlertVisible(true);
-    };
+    useEffect(() => {
+        if (userId) {
+            loadData(userId);
+        }
+    }, [activeFilter]);
 
     const handleRefresh = async () => {
         setRefreshing(true);
-        await loadData();
+        await loadData(userId);
         setRefreshing(false);
     };
-
-    const loadData = async () => {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        setUserId(storedUserId || '');
-
 
     const loadData = async (userIdFromStorage: string) => {
         try {
@@ -93,7 +91,7 @@ export default function HomeScreen() {
                 klubbMap[k._id] = k;
             });
 
-            const profile = profileList.find((p: any) => p._id === storedUserId);
+            const profile = profileList.find((p: any) => p._id === userIdFromStorage);
             setCurrentProfile(profile);
             const følgerKlubber = profile?.følgerKlubber?.map((id: any) => id.toString()) || [];
 
@@ -147,9 +145,8 @@ export default function HomeScreen() {
         }
     };
 
-    // 👇 blokkér visning mens vi sjekker login
     if (isLoading) {
-        return null; // eller en spinner, f.eks. <ActivityIndicator />
+        return null;
     }
 
     return (
@@ -161,7 +158,6 @@ export default function HomeScreen() {
                 <Text style={styles.filterButtonText}>Filter</Text>
             </TouchableOpacity>
 
-            {/* Modal for filtrering */}
             <Modal visible={filterModalVisible} transparent animationType="slide">
                 <View style={styles.modalBackground}>
                     <View style={styles.modalContent}>

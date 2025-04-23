@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/conn";
-import MReport from "../models/mReport";
+import MReport from "../models/modelsReport";
 import nodemailer from "nodemailer";
 
 export const reportRouter = express.Router();
