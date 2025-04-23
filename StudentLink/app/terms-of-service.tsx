@@ -10,34 +10,65 @@ export default function TermsOfService() {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Text style={styles.title}>Vilkår for bruk</Text>
+                <Text style={styles.title}>Brukervilkår for StudentLink</Text>
 
                 <Text style={styles.text}>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin scelerisque
-                    felis ut urna feugiat, sit amet molestie metus congue. Phasellus euismod, elit eget
-                    fringilla suscipit, libero tortor varius turpis, ut sagittis orci orci id neque.
-                    Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;
-                    Integer efficitur orci in turpis sodales, nec facilisis mi condimentum.
+                    1. Godkjenning av vilkår. {"\n"}
+                    Ved å bruke StudentLink, godtar du disse vilkårene. Hvis du ikke er enig, kan du ikke bruke appen.
                 </Text>
 
                 <Text style={styles.text}>
-                    Nullam facilisis nunc vitae arcu ullamcorper, eget hendrerit quam dapibus. Donec
-                    condimentum tristique magna, id tristique justo gravida nec. Pellentesque auctor,
-                    ipsum et dapibus mattis, dui nulla facilisis orci, id pulvinar dui lacus sit amet felis.
-                    Donec volutpat rhoncus mi, et lobortis dolor malesuada a. Suspendisse varius magna
-                    a libero dignissim, in bibendum ligula lacinia.
+                    2. Registrering av bruker.{"\n"}
+                    For å opprette en bruker må du ha en gyldig @usn.no-e-postadresse eller annen universitets-e-post.{"\n"}
+                    Du er selv ansvarlig for å holde innloggingsdetaljene dine trygge.{"\n"}
                 </Text>
 
                 <Text style={styles.text}>
-                    Donec vel metus nec risus vehicula cursus. Integer feugiat enim vitae lectus
-                    posuere, nec tristique erat posuere. Suspendisse vehicula, nulla nec tincidunt
-                    imperdiet, mauris ipsum tincidunt urna, non fringilla velit felis ac libero.
+                    3. Hvem kan bruke appen?{"\n"}
+                    Appen er beregnet på studenter. For å bruke den må du enten:{"\n"}
+                    Være minst 18 år, eller{"\n"}
+                    Være registrert som student ved et universitet.{"\n"}
                 </Text>
 
                 <Text style={styles.text}>
-                    Phasellus eget est ut elit volutpat vulputate a id felis. Donec scelerisque
-                    vehicula nunc, at venenatis ex molestie id. Nam hendrerit justo vitae magna
-                    luctus, non congue neque malesuada.
+                    4. Ditt innhold i appen.{"\n"}
+                    Du eier det du laster opp, men gir StudentLink tillatelse til å vise det.{"\n"}
+                    Alt du publiserer (som innlegg eller kommentarer) må følge appens regler – du er ansvarlig for innholdet ditt.{"\n"}
+                </Text>
+
+                <Text style={styles.text}>
+                    5. Hva er ikke tillatt?{"\n"}
+                    Du må ikke:{"\n"}
+                    Dele støtende, truende, diskriminerende eller ulovlig innhold.{"\n"}
+                    Misbruke rapporteringsfunksjonen eller late som om du er noen andre.{"\n"}
+                    Forsøke å skade, hacke eller forstyrre appens funksjoner.
+                </Text>
+
+                <Text style={styles.text}>
+                    6. Avslutte din brukerkonto.{"\n"}
+                    Du kan når som helst slette kontoen din. Ved sletting kan du velge om du også vil fjerne alle dine innlegg og kommentarer.{"\n"}
+                    StudentLink forbeholder seg retten til å stanse eller fjerne kontoer som bryter vilkårene.{"\n"}
+                </Text>
+
+                <Text style={styles.text}>
+                    7. Personvern og data.{"\n"}
+                    Vi lagrer kun nødvendig informasjon for at appen skal fungere. Les mer i vår personvernerklæring (lenke følger senere).
+                </Text>
+
+                <Text style={styles.text}>
+                    8. Ansvar og garantier.{"\n"}
+                    Appen leveres «som den er» – uten garantier. Vi er ikke ansvarlige for eventuelle problemer eller skader som oppstår ved bruk.
+                </Text>
+
+                <Text style={styles.text}>
+                    9. Endringer i vilkårene.{"\n"}
+                    Disse vilkårene kan oppdateres. Eventuelle endringer gjelder fra publiseringsdatoen i appen.
+                </Text>
+
+                <Text style={styles.text}>
+                    10. Kontakt oss.{"\n"}
+                    Har du spørsmål? .{"\n"}
+                    Ta kontakt på: studentlink@gmail.com.
                 </Text>
 
                 <TouchableOpacity style={styles.button} onPress={() => router.back()}>
