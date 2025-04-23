@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import locationCheck from '@/hooks/useLocationCheck';
-import {useState} from "react";
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
@@ -13,7 +12,7 @@ export default function RootLayout() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [ isLocationValid, isLoading ] = locationCheck();
+    const [ isLocationValid, isLocationLoading ] = locationCheck();
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -39,7 +38,7 @@ export default function RootLayout() {
         );
     }
 
-    if (isLoading) {
+    if (isLocationLoading) {
         return (
             <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
                 <View style={styles.container}>
