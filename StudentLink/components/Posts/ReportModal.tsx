@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     disabledButton: {
-        backgroundColor: '#333',
+        backgroundColor: '#332',
     },
     buttonText: {
         color: 'white',
