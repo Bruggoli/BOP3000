@@ -40,10 +40,6 @@ export default function Navbar({ location, toggleTheme }: { location: string, to
                             <Ionicons name="settings-outline" size={20} color="white" />
                             <Text style={styles.menuText}>Settings</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={toggleTheme} style={styles.menuItem}>
-                            <Ionicons name="contrast-outline" size={20} color="white" />
-                            <Text style={styles.menuText}>Dark / Light Mode</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => { toggleMenu(); router.push('/terms-of-service'); }} style={styles.menuItem}>
                             <Ionicons name="document-text-outline" size={20} color="white" />
                             <Text style={styles.menuText}>Terms of Service</Text>

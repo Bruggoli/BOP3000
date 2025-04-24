@@ -279,3 +279,30 @@ profilRouter.post("/login", async (req: Request, res: Response): Promise<void> =
         res.status(500).json({ error: error.message || "Ukjent feil ved innlogging." });
     }
 });
+// Endre passord
+profilRouter.patch('/:id/password', async (req: Request, res: Response) => {
+    try {
+        const id = new ObjectId(req.params.id);
+        const { newPassword } = req.body;
+
+        if (!newPassword) {
+            res.status(400).json({ error: 'Nytt passord mangler' });
+            return;
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        const result = await collections.profiler?.updateOne(
+            { _id: id },
+            { $set: { passord: hashed } }
+        );
+
+        if (result?.modifiedCount === 0) {
+            res.status(404).json({ error: 'Bruker ikke funnet eller endring feilet' });
+            return;
+        }
+
+        res.status(200).json({ message: 'Passord endret' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
