@@ -43,6 +43,7 @@ type Props = {
 
 export default function PostCard({
                                      postId,
+                                     userId,
                                      username,
                                      userAvatar,
                                      title,
@@ -112,7 +113,9 @@ export default function PostCard({
         <View style={[styles.card, { backgroundColor: color }]}>
             <View style={styles.headerRow}>
                 <View style={styles.userRow}>
-                    <Image source={avatarSource} style={styles.avatar} />
+                    <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]' as const, params: { id: userId } })}>
+                        <Image source={avatarSource} style={styles.avatar} />
+                    </TouchableOpacity>
                     <Text style={styles.username}>{username}</Text>
                 </View>
                 <Text style={styles.timestamp}>{timestamp}</Text>
@@ -140,7 +143,7 @@ export default function PostCard({
                     onPress={() =>
                         router.push({
                             pathname: '/comments/[postId]',
-                            params: { postId, color }, // ✅ sender fargen med
+                            params: { postId, color },
                         })
                     }
                 >

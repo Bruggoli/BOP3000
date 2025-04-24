@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import Navbar from '@/components/Navigation/Navbar';
@@ -26,40 +26,76 @@ const avatarMap: Record<string, any> = {
     'avatar17.png': require('../../assets/avatars/avatar17.png'),
 };
 
-type Post = {
-    _id: string;
-    brukerId: string;
-    tittel: string;
-    innhold: string;
-    location?: string;
-    klubbId?: string;
-    likes: any[];
-    kommentarer: any[];
-    opprettet: string;
-};
-
-export default function PublicProfile() {
+export default function PublicProfileScreen() {
     const { id } = useLocalSearchParams();
     const [profile, setProfile] = useState<any>(null);
-    const [posts, setPosts] = useState<Post[]>([]);
-
+    const [posts, setPosts] = useState<any[]>([]);
+    const [clubs, setClubs] = useState<any[]>([]);
     const server = process.env.EXPO_PUBLIC_LOCALHOST;
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const profileRes = await fetch(`${server}/profil/${id}`);
+                const [profileRes, postRes, klubbRes] = await Promise.all([
+                    fetch(`${server}/profil/${id}`),
+                    fetch(`${server}/post`),
+                    fetch(`${server}/klubb`),
+                ]);
+
                 const profileData = await profileRes.json();
+                const allPosts = await postRes.json();
+                const allClubs = await klubbRes.json();
+
+                const brukerensKlubber = allClubs.filter((k: any) =>
+                    profileData?.følgerKlubber?.includes(k._id)
+                );
+                setClubs(brukerensKlubber);
                 setProfile(profileData);
 
-                const postRes = await fetch(`${server}/post`);
-                const allPosts = await postRes.json();
-                const userPosts = allPosts
-                    .filter((post: Post) => post.brukerId === id)
-                    .sort((a: Post, b: Post) => new Date(b.opprettet).getTime() - new Date(a.opprettet).getTime());
-                setPosts(userPosts);
-            } catch (error) {
-                console.error('Feil ved lasting av profil eller innlegg:', error);
+                const klubbMap: Record<string, any> = {};
+                allClubs.forEach((klubb: any) => {
+                    klubbMap[klubb._id] = klubb;
+                });
+
+                const brukerensPoster = await Promise.all(
+                    allPosts
+                        .filter((post: any) => post.brukerId === id)
+                        .map(async (post: any) => {
+                            const commentRes = await fetch(`${server}/kommentar/post/${post._id}`);
+                            const commentList = await commentRes.json();
+
+                            const createdAt = new Date(post.opprettet);
+                            const klubb = klubbMap[post.klubbId];
+
+                            return {
+                                postId: post._id,
+                                userId: post.brukerId,
+                                username: profileData?.brukernavn || 'Ukjent',
+                                userAvatar: profileData?.icon || 'avatar1.png',
+                                title: post.tittel,
+                                text: post.innhold,
+                                location: post.location || "Campus Bø",
+                                clubName: klubb?.navn || "New Feed",
+                                color: klubb?.farge || "#607D8B",
+                                likes: Array.isArray(post.likes) ? post.likes : [],
+                                comments: commentList.length,
+                                timestamp: createdAt.toLocaleString('no-NO', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                }),
+                                createdAt,
+                            };
+                        })
+                );
+
+                const sortedPosts = brukerensPoster.sort(
+                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+                setPosts(sortedPosts);
+            } catch (err) {
+                console.error("Feil ved henting av offentlig profil:", err);
             }
         };
 
@@ -70,39 +106,33 @@ export default function PublicProfile() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Navbar location={`@${profile?.brukernavn || 'Profil'}`} toggleTheme={() => {}} />
+            <Navbar location="Brukerprofil" toggleTheme={() => {}} />
 
             <View style={styles.profileHeader}>
                 <Image source={avatarSource} style={styles.avatar} />
-                <Text style={styles.username}>Brukernavn: <Text style={{ fontWeight: 'bold' }}>{profile?.brukernavn || 'Ukjent'}</Text></Text>
-                <Text style={styles.postsLabel}>Innlegg fra denne brukeren:</Text>
+                <Text style={styles.username}>{profile?.brukernavn || 'Ukjent'}</Text>
+                {!!profile?.bio && <Text style={styles.bio}>{profile.bio}</Text>}
             </View>
 
+            <Text style={styles.sectionTitle}>Fulgte klubber</Text>
+            <ScrollView contentContainerStyle={styles.clubList}>
+                {clubs.map((club) => (
+                    <View
+                        key={club._id}
+                        style={[styles.clubCard, { backgroundColor: club.farge || '#607D8B' }]}
+                    >
+                        <Text style={styles.clubName}>{club.navn}</Text>
+                        <Text style={styles.clubDesc}>{club.beskrivelse}</Text>
+                    </View>
+                ))}
+            </ScrollView>
+
+            <Text style={styles.sectionTitle}>Innlegg</Text>
             <FlatList
                 data={posts}
-                keyExtractor={(item) => item._id}
-                renderItem={({ item }) => (
-                    <PostCard
-                        postId={item._id}
-                        userId={item.brukerId}
-                        username={profile?.brukernavn || 'Ukjent'}
-                        userAvatar={profile?.icon}
-                        title={item.tittel}
-                        text={item.innhold}
-                        location={item.location || ''}
-                        color="#555"
-                        likes={item.likes?.length || 0}
-                        comments={item.kommentarer?.length || 0}
-                        timestamp={new Date(item.opprettet).toLocaleString('no-NO', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}
-                    />
-                )}
-                contentContainerStyle={styles.list}
-                keyboardShouldPersistTaps="handled"
+                keyExtractor={(item) => item.postId}
+                renderItem={({ item }) => <PostCard {...item} currentUserId="" />}
+                contentContainerStyle={styles.postList}
                 showsVerticalScrollIndicator={false}
             />
 
@@ -119,27 +149,52 @@ const styles = StyleSheet.create({
     },
     profileHeader: {
         alignItems: 'center',
-        marginBottom: 15,
-        marginTop: 12,
+        marginBottom: 12,
     },
     avatar: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        marginBottom: 10,
+        marginBottom: 8,
     },
     username: {
         color: 'white',
-        fontSize: 18,
+        fontSize: 20,
+        fontWeight: 'bold',
         marginBottom: 4,
     },
-    postsLabel: {
-        color: 'white',
-        fontSize: 16,
-        marginTop: 10,
-        marginBottom: 10,
+    bio: {
+        color: '#ccc',
+        fontSize: 14,
+        textAlign: 'center',
+        marginBottom: 12,
     },
-    list: {
-        paddingBottom: 80,
+    sectionTitle: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+        marginBottom: 6,
+        marginTop: 10,
+    },
+    clubList: {
+        paddingBottom: 10,
+    },
+    clubCard: {
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 8,
+    },
+    clubName: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 15,
+    },
+    clubDesc: {
+        color: 'white',
+        fontSize: 13,
+        marginTop: 2,
+    },
+    postList: {
+        paddingBottom: 100,
     },
 });
