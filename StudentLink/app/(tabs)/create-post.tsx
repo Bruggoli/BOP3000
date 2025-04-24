@@ -1,4 +1,3 @@
-// create-post.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import Navbar from '@/components/Navigation/Navbar';
-import {router} from "expo-router";
+import { router } from "expo-router";
 
 export default function CreatePostScreen() {
     const [title, setTitle] = useState('');
@@ -14,24 +13,34 @@ export default function CreatePostScreen() {
     const [selectedClub, setSelectedClub] = useState('');
     const [userId, setUserId] = useState('');
     const [clubs, setClubs] = useState<any[]>([]);
+    const [followedClubIds, setFollowedClubIds] = useState<string[]>([]);
 
     useEffect(() => {
-        const loadUserId = async () => {
+        const loadData = async () => {
             const id = await AsyncStorage.getItem('userId');
-            if (id) setUserId(id);
-        };
-        loadUserId();
+            if (!id) return;
+            setUserId(id);
 
-        const fetchClubs = async () => {
             try {
-                const response = await fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/klubb`);
-                const data = await response.json();
-                setClubs(data);
+                const [clubRes, profileRes] = await Promise.all([
+                    fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/klubb`),
+                    fetch(`${process.env.EXPO_PUBLIC_LOCALHOST}/profil/${id}`)
+                ]);
+
+                const allClubs = await clubRes.json();
+                const userProfile = await profileRes.json();
+
+                const followed = userProfile?.følgerKlubber || [];
+                setFollowedClubIds(followed.map((id: any) => id.toString()));
+
+                const filtered = allClubs.filter((club: any) => followed.includes(club._id));
+                setClubs(filtered);
             } catch (error) {
-                console.error('Feil ved henting av klubber:', error);
+                console.error('Feil ved lasting av data:', error);
             }
         };
-        fetchClubs();
+
+        loadData();
     }, []);
 
     const handleCreatePost = async () => {
@@ -64,7 +73,7 @@ export default function CreatePostScreen() {
                 setTitle('');
                 setContent('');
                 setSelectedClub('');
-                router.replace('/'); // 🚀 Naviger til index
+                router.replace('/');
             } else {
                 Alert.alert('Feil', 'Kunne ikke opprette innlegget.');
             }
@@ -73,7 +82,6 @@ export default function CreatePostScreen() {
             Alert.alert('Feil', 'Noe gikk galt ved oppretting.');
         }
     };
-
 
     return (
         <SafeAreaView style={styles.container}>
@@ -97,19 +105,25 @@ export default function CreatePostScreen() {
                 onChangeText={setContent}
             />
 
-            <Text style={styles.label}>Velg klubb (valgfritt)</Text>
-            <View style={styles.pickerContainer}>
-                <Picker
-                    selectedValue={selectedClub}
-                    onValueChange={(itemValue) => setSelectedClub(itemValue)}
-                    style={styles.picker}
-                >
-                    <Picker.Item label="Ingen klubb" value="" />
-                    {clubs.map((club) => (
-                        <Picker.Item key={club._id} label={club.navn} value={club._id} />
-                    ))}
-                </Picker>
-            </View>
+            <Text style={styles.label}>Velg klubb</Text>
+            {clubs.length > 0 ? (
+                <View style={styles.pickerContainer}>
+                    <Picker
+                        selectedValue={selectedClub}
+                        onValueChange={(itemValue) => setSelectedClub(itemValue)}
+                        style={styles.picker}
+                    >
+                        <Picker.Item label="New Feed (uten klubb)" value="" />
+                        {clubs.map((club) => (
+                            <Picker.Item key={club._id} label={club.navn} value={club._id} />
+                        ))}
+                    </Picker>
+                </View>
+            ) : (
+                <Text style={{ color: '#aaa', marginBottom: 16 }}>
+                    Du må følge en klubb før du kan tagge den i et innlegg.
+                </Text>
+            )}
 
             <TouchableOpacity style={styles.button} onPress={handleCreatePost}>
                 <Text style={styles.buttonText}>Publiser</Text>
