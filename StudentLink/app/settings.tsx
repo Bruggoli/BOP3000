@@ -1,18 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Navbar from '@/components/Navigation/Navbar';
 import BottomMenu from '@/components/Navigation/BottomMenu';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function SettingsScreen() {
     const [userId, setUserId] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
     const router = useRouter();
     const server = process.env.EXPO_PUBLIC_LOCALHOST;
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -33,8 +43,8 @@ export default function SettingsScreen() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ brukernavn: username }),
             });
-            if (res.ok) Alert.alert('✅ Oppdatert', 'Brukernavn endret');
-            else Alert.alert('❌ Feil', 'Kunne ikke oppdatere brukernavn');
+            if (res.ok) showAlert('✅ Oppdatert', 'Brukernavn endret');
+            else showAlert('❌ Feil', 'Kunne ikke oppdatere brukernavn');
         } catch (err) {
             console.error('Feil ved endring av brukernavn:', err);
         }
@@ -42,7 +52,7 @@ export default function SettingsScreen() {
 
     const handlePasswordChange = async () => {
         if (!password || password !== confirmPassword) {
-            Alert.alert('❌ Feil', 'Passordene matcher ikke eller er tomme');
+            showAlert('❌ Feil', 'Passordene matcher ikke eller er tomme');
             return;
         }
         try {
@@ -51,30 +61,19 @@ export default function SettingsScreen() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newPassword: password }),
             });
-            if (res.ok) Alert.alert('✅ Oppdatert', 'Passord endret');
-            else Alert.alert('❌ Feil', 'Kunne ikke endre passord');
+            if (res.ok) {
+                showAlert('✅ Oppdatert', 'Passord endret');
+                setPassword('');
+                setConfirmPassword('');
+            }
+            else showAlert('❌ Feil', 'Kunne ikke endre passord');
         } catch (err) {
             console.error('Feil ved endring av passord:', err);
         }
     };
 
     const handleDelete = async () => {
-        Alert.alert('Slett konto', 'Er du sikker på at du vil slette kontoen?', [
-            { text: 'Avbryt', style: 'cancel' },
-            {
-                text: 'Ja, slett',
-                style: 'destructive',
-                onPress: async () => {
-                    try {
-                        await fetch(`${server}/profil/${userId}`, { method: 'DELETE' });
-                        await AsyncStorage.clear();
-                        router.replace('/auth/login');
-                    } catch (err) {
-                        Alert.alert('❌ Feil', 'Kunne ikke slette bruker');
-                    }
-                },
-            },
-        ]);
+        showAlert('Slett konto', 'Gå til profilen for å slette brukeren.');
     };
 
     const handleLogout = async () => {
@@ -121,12 +120,19 @@ export default function SettingsScreen() {
             </TouchableOpacity>
 
             <Text style={styles.sectionTitle}>Konto</Text>
-            <TouchableOpacity style={[styles.button, styles.dangerButton]} onPress={handleDelete}>
-                <Text style={styles.buttonText}>Slett bruker</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={handleLogout}>
                 <Text style={styles.buttonText}>Logg ut</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.dangerButton]} onPress={handleDelete}>
+            <Text style={styles.buttonText}>Slett bruker</Text>
+        </TouchableOpacity>
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+            />
 
             <BottomMenu />
         </SafeAreaView>

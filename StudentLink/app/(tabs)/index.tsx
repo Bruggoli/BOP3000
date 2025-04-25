@@ -124,7 +124,7 @@ export default function HomeScreen() {
                         text: post.innhold,
                         location: post.location || 'Campus Bø',
                         clubName: klubb?.navn || 'New Feed',
-                        color: klubb?.farge || '#607D8B',
+                        color: klubb?.farge || '#FF8A65',
                         likes: Array.isArray(post.likes) ? post.likes : [],
                         comments: commentList.length,
                         timestamp: new Date(post.opprettet).toLocaleString('no-NO', {
