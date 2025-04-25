@@ -6,21 +6,17 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/startdb.tsx",
-    "dev": "nodemon -r tsconfig-paths/register src/startdb.ts",
-    "android": "expo run:android",
-    "ios": "expo run:ios"
+    "start": "node dist/startdb.ts",
+    "dev": "nodemon -r tsconfig-paths/register src/startdb.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.1.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
-    "expo": "^52.0.37",
     "express": "^4.21.2",
     "mongodb": "^6.13.1",
     "mongoose": "^8.11.0",

@@ -6,13 +6,12 @@ import { postRouter } from "./routes/routespost";
 import { kommentarRouter } from "./routes/routeskommentar";
 import { reportRouter } from "./routes/routesreport";
 import connectToDb from "./services/conn";
-import bcrypt from 'bcrypt';
 import cors from 'cors';
 // Last inn miljøvariabler fra .env
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 const server = process.env.LOCALHOST;
 
 
@@ -29,7 +28,6 @@ connectToDb()
         app.use("/klubb", klubberRouter);
         app.use("/profil", profilRouter);
         app.use("/post", postRouter);
-        // Kommentarer lastes inn via poster, men beholdes midlertidig
         app.use("/kommentar", kommentarRouter);
         app.use("/report", reportRouter);
 
@@ -39,7 +37,7 @@ connectToDb()
         });
 
         // @ts-ignore
-        app.listen(port, '127.0.0.1', () => {
+        app.listen(port, server, () => {
             console.log(`🚀Server kjører på ${server}:${port}`);
         });
     })

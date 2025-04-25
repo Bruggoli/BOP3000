@@ -28,7 +28,7 @@ profilRouter.post("/", async (req: Request, res: Response): Promise<void> => {
 
         const nyProfil: ModelsProfil = {
             brukernavn: username,
-            email,
+            email: email,
             passord: hashedPassword,
             icon: icon || "avatar.png",
             medlemskap: medlemskap || [],
@@ -47,7 +47,7 @@ profilRouter.post("/", async (req: Request, res: Response): Promise<void> => {
             secure: true,
         });
 
-        const verifyLink = `http://localhost:3000/profil/verify/${verifyToken}`;
+        const verifyLink = `${process.env.LOCALHOST}/profil/verify/${verifyToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,

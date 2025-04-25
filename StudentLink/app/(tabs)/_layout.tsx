@@ -42,6 +42,7 @@ export default function RootLayout() {
         return (
             <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
                 <View style={styles.container}>
+                    <ActivityIndicator size="large" color="#fff" />
                     <BottomMenu />
                 </View>
             </ThemeProvider>
