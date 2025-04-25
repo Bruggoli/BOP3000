@@ -37,7 +37,7 @@ connectToDb()
         });
 
         // @ts-ignore
-        app.listen(port, server, () => {
+        app.listen(port, '127.0.0.1', () => {
             console.log(`🚀Server kjører på ${server}:${port}`);
         });
     })
