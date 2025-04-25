@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ReportModal from '@/components/Posts/ReportModal'; // juster path etter behov
+import ReportModal from '@/components/Posts/ReportModal';
+import CustomAlert from '@/components/CustomAlert';
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../../assets/avatars/avatar1.png'),
@@ -61,6 +62,15 @@ export default function PostCard({
     const hasLiked = localLikes.includes(currentUserId);
     const router = useRouter();
     const [modalVisible, setModalVisible] = useState(false);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     const handleLike = async () => {
         try {
@@ -76,7 +86,7 @@ export default function PostCard({
                     : [...prevLikes, currentUserId]
             );
         } catch (err) {
-            console.error("Kunne ikke like/unlike posten:", err);
+            showAlert("Feil", "Kunne ikke like/unlike posten.");
         }
     };
 
@@ -99,13 +109,12 @@ export default function PostCard({
             const result = await response.json();
 
             if (response.ok) {
-                Alert.alert("Takk!", "Rapporten er sendt.");
+                showAlert("Takk!", "Rapporten er sendt.");
             } else {
-                Alert.alert("Feil", result?.error || "Kunne ikke sende rapport.");
+                showAlert("Feil", result?.error || "Kunne ikke sende rapport.");
             }
         } catch (error) {
-            console.error("Feil ved rapportering:", error);
-            Alert.alert("Feil", "Kunne ikke sende rapport.");
+            showAlert("Feil", "Kunne ikke sende rapport.");
         }
     };
 
@@ -158,6 +167,13 @@ export default function PostCard({
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onSubmit={(reason) => sendReport(reason)}
+            />
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
             />
         </View>
     );

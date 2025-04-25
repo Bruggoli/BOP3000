@@ -17,6 +17,7 @@ import PostCard from '@/components/Posts/PostCard';
 import Navbar from '@/components/Navigation/Navbar';
 import BottomMenu from '@/components/Navigation/BottomMenu';
 import CustomAlert from '@/components/CustomAlert';
+import CommentCard from "@/components/Posts/CommentCard";
 
 export default function CommentScreen() {
     const { postId, color } = useLocalSearchParams();
@@ -182,7 +183,18 @@ export default function CommentScreen() {
                     ListHeaderComponent={() => post && <PostCard {...post} currentUserId={userId} />}
                     data={comments}
                     keyExtractor={(item) => item.postId}
-                    renderItem={({ item }) => <PostCard {...item} currentUserId={userId} />}
+                    renderItem={({ item }) => (
+                        <CommentCard
+                            commentId={item.postId}
+                            userId={item.userId}
+                            username={item.username}
+                            userAvatar={item.userAvatar}
+                            text={item.text}
+                            timestamp={item.timestamp}
+                            likes={item.likes}
+                            currentUserId={userId}
+                        />
+                    )}
                     contentContainerStyle={styles.list}
                     showsVerticalScrollIndicator={false}
                 />
