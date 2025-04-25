@@ -47,8 +47,8 @@ connectToDb()
             : console.warn("server env is undefined");
 
         // @ts-ignore
-        app.listen(port, noHTTPserverURL, () => {
-            console.log(`🚀Server kjører på ${server}:${port}`);
+        app.listen(port, () => {
+            console.log(`🚀Server kjører på port: ${port}`);
         });
     })
     .catch((error: Error) => {
