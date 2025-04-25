@@ -36,8 +36,18 @@ connectToDb()
             res.send("🚀 API is running...");
         });
 
+        //@ts-ignore
+        const noHTTPserverURL =
+            server !== undefined
+            ? server.startsWith("http://")
+                ? server.substring(7)
+                : server.startsWith("https://")
+                    ? server.substring(8)
+                    : server
+            : console.warn("server env is undefined");
+
         // @ts-ignore
-        app.listen(port, '127.0.0.1', () => {
+        app.listen(port, noHTTPserverURL, () => {
             console.log(`🚀Server kjører på ${server}:${port}`);
         });
     })
