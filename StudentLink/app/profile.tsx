@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, Image, FlatList, StyleSheet, TouchableOpacity,
-    Modal, ScrollView, Alert, TextInput
+    Modal, ScrollView, TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,7 +37,7 @@ export default function Profile() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
-    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
+    const server = process.env.EXPO_PUBLIC_LOCALHOST;
     const [activeTab, setActiveTab] = useState<'posts' | 'clubs'>('posts');
     const [followedClubs, setFollowedClubs] = useState<any[]>([]);
     const [alertVisible, setAlertVisible] = useState(false);
@@ -142,7 +142,7 @@ export default function Profile() {
         const trimmedBio = newBio.trim();
 
         if (trimmedBio === profile?.bio?.trim()) {
-            setEditingBio(false); // ingen endring
+            setEditingBio(false);
             return;
         }
 
@@ -168,10 +168,13 @@ export default function Profile() {
         }
     };
 
-
     const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
 
     const handleAvatarChange = async (newIcon: string) => {
+        if (newIcon === profile?.icon) {
+            setModalVisible(false);
+            return;
+        }
         try {
             const res = await fetch(`${server}/profil/${userId}`, {
                 method: 'PATCH',
@@ -196,7 +199,6 @@ export default function Profile() {
     return (
         <SafeAreaView style={styles.container}>
             <Navbar location="Profil" toggleTheme={() => {}} />
-
             <View style={styles.profileHeader}>
                 <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <Image source={avatarSource} style={styles.avatar} />
@@ -219,7 +221,6 @@ export default function Profile() {
                                 textAlignVertical="top"
                                 autoFocus
                             />
-
                             <TouchableOpacity style={styles.saveIconButton} onPress={handleBioSave}>
                                 <Text style={styles.saveIconText}>✔</Text>
                             </TouchableOpacity>
@@ -231,9 +232,7 @@ export default function Profile() {
                             </Text>
                         </TouchableOpacity>
                     )}
-
                 </TouchableOpacity>
-
 
                 <View style={styles.tabButtons}>
                     <TouchableOpacity
@@ -327,8 +326,11 @@ const styles = StyleSheet.create({
     },
     tabButtons: { flexDirection: 'row', justifyContent: 'center', marginBottom: 12 },
     tabButton: {
-        backgroundColor: '#333', paddingVertical: 8,
-        paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
+        backgroundColor: '#333',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        marginHorizontal: 4,
+        borderRadius: 20,
     },
     activeTab: { backgroundColor: '#4CAF50' },
     tabText: { color: 'white', fontWeight: 'bold' },
@@ -338,18 +340,30 @@ const styles = StyleSheet.create({
     clubName: { color: 'white', fontWeight: 'bold', fontSize: 16 },
     clubDesc: { color: 'white', marginTop: 4 },
     exploreButton: {
-        backgroundColor: '#4CAF50', marginTop: 20,
-        padding: 12, borderRadius: 8, alignItems: 'center',
+        backgroundColor: '#4CAF50',
+        marginTop: 20,
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
     },
     exploreText: { color: 'white', fontWeight: 'bold' },
     avatarPicker: {
-        flexDirection: 'row', flexWrap: 'wrap',
-        justifyContent: 'center', padding: 10,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        padding: 10,
     },
     avatarOption: {
-        width: 50, height: 50, borderRadius: 25,
-        margin: 5, borderWidth: 2, borderColor: 'transparent',
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        margin: 5,
+        borderWidth: 2,
+        borderColor: 'transparent',
     },
+    selectedAvatar: { borderColor: 'white' },
+    modalContainer: { flex: 1, backgroundColor: '#121212', paddingTop: 30 },
+    modalTitle: { color: 'white', fontSize: 18, textAlign: 'center', marginBottom: 10 },
     bioEditRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -369,9 +383,6 @@ const styles = StyleSheet.create({
         width: '80%',
         textAlignVertical: 'top',
     },
-
-
-
     saveIconButton: {
         backgroundColor: '#4CAF50',
         paddingHorizontal: 12,
@@ -383,9 +394,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-
-
-    selectedAvatar: { borderColor: 'white' },
-    modalContainer: { flex: 1, backgroundColor: '#121212', paddingTop: 30 },
-    modalTitle: { color: 'white', fontSize: 18, textAlign: 'center', marginBottom: 10 },
 });
+
