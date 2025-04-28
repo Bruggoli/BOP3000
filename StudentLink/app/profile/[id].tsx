@@ -7,23 +7,23 @@ import BottomMenu from '@/components/Navigation/BottomMenu';
 import PostCard from '@/components/Posts/PostCard';
 
 const avatarMap: Record<string, any> = {
-    'avatar1.png': require('../../assets/avatars/avatar1.png'),
-    'avatar2.png': require('../../assets/avatars/avatar2.png'),
-    'avatar3.png': require('../../assets/avatars/avatar3.png'),
-    'avatar4.png': require('../../assets/avatars/avatar4.png'),
-    'avatar5.png': require('../../assets/avatars/avatar5.png'),
-    'avatar6.png': require('../../assets/avatars/avatar6.png'),
-    'avatar7.png': require('../../assets/avatars/avatar7.png'),
-    'avatar8.png': require('../../assets/avatars/avatar8.png'),
-    'avatar9.png': require('../../assets/avatars/avatar9.png'),
-    'avatar10.png': require('../../assets/avatars/avatar10.png'),
-    'avatar11.png': require('../../assets/avatars/avatar11.png'),
-    'avatar12.png': require('../../assets/avatars/avatar12.png'),
-    'avatar13.png': require('../../assets/avatars/avatar13.png'),
-    'avatar14.png': require('../../assets/avatars/avatar14.png'),
-    'avatar15.png': require('../../assets/avatars/avatar15.png'),
-    'avatar16.png': require('../../assets/avatars/avatar16.png'),
-    'avatar17.png': require('../../assets/avatars/avatar17.png'),
+    'avatar1.jpeg': require('../../assets/avatars/avatar1.jpeg'),
+    'avatar2.jpeg': require('../../assets/avatars/avatar2.jpeg'),
+    'avatar3.jpeg': require('../../assets/avatars/avatar3.jpeg'),
+    'avatar4.jpeg': require('../../assets/avatars/avatar4.jpeg'),
+    'avatar5.jpeg': require('../../assets/avatars/avatar5.jpeg'),
+    'avatar6.jpeg': require('../../assets/avatars/avatar6.jpeg'),
+    'avatar7.jpeg': require('../../assets/avatars/avatar7.jpeg'),
+    'avatar8.jpeg': require('../../assets/avatars/avatar8.jpeg'),
+    'avatar9.jpeg': require('../../assets/avatars/avatar9.jpeg'),
+    'avatar10.jpeg': require('../../assets/avatars/avatar10.jpeg'),
+    'avatar11.jpeg': require('../../assets/avatars/avatar11.jpeg'),
+    'avatar12.jpeg': require('../../assets/avatars/avatar12.jpeg'),
+    'avatar13.jpeg': require('../../assets/avatars/avatar13.jpeg'),
+    'avatar14.jpeg': require('../../assets/avatars/avatar14.jpeg'),
+    'avatar15.jpeg': require('../../assets/avatars/avatar15.jpeg'),
+    'avatar16.jpeg': require('../../assets/avatars/avatar16.jpeg'),
+    'avatar17.jpeg': require('../../assets/avatars/avatar17.jpeg'),
 };
 
 export default function PublicProfileScreen() {
@@ -71,7 +71,7 @@ export default function PublicProfileScreen() {
                                 postId: post._id,
                                 userId: post.brukerId,
                                 username: profileData?.brukernavn || 'Ukjent',
-                                userAvatar: profileData?.icon || 'avatar1.png',
+                                userAvatar: profileData?.icon || 'avatar1.jpeg',
                                 title: post.tittel,
                                 text: post.innhold,
                                 location: post.location || "Campus Bø",
@@ -102,7 +102,7 @@ export default function PublicProfileScreen() {
         if (id) fetchData();
     }, [id]);
 
-    const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
+    const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.jpeg'];
 
     return (
         <SafeAreaView style={styles.container}>
