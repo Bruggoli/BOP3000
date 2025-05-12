@@ -20,7 +20,6 @@ export const connectToDb = async () => {
         collections.kommentar = db.collection("Kommentar");
         collections.reports = db.collection("Reports");
 
-
         console.log("Collection er satt opp!");
     } catch (error) {
         console.error("Database connection failed:", error);

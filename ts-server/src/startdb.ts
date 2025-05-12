@@ -12,7 +12,7 @@ import cors from 'cors';
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT) || 3000;
 const server = process.env.LOCALHOST;
 
 
@@ -35,12 +35,11 @@ connectToDb()
 
         // Hovedendepunkt
         app.get("/", (req: Request, res: Response) => {
-            res.send("🚀 API is running...");
+            res.send("API is running...");
         });
 
-        // @ts-ignore
         app.listen(port, '127.0.0.1', () => {
-            console.log(`🚀Server kjører på ${server}:${port}`);
+            console.log(`Server kjører på ${server}:${port}`);
         });
     })
     .catch((error: Error) => {

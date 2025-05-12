@@ -225,7 +225,7 @@ profilRouter.delete("/:id", async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        res.status(200).send("✅ Bruker og valgte data slettet.");
+        res.status(200).send("Bruker og valgte data slettet.");
     } catch (error) {
         console.error("Feil ved sletting:", error);
         res.status(500).send("Noe gikk galt ved sletting av bruker.");

@@ -6,6 +6,6 @@ export default interface Klubb {
     beskrivelse: string;
     admin: ObjectId;
     følgere: ObjectId[];
-    farge: string; // 👈 NY!
+    farge: string;
 }
 

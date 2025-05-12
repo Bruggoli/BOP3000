@@ -26,7 +26,7 @@ klubberRouter.get("/", async (req: express.Request, res: express.Response): Prom
     }
 });
 
-// ✅ Opprett en ny klubb og legg til som følger
+// Opprett ny klubb og legg til som følger
 klubberRouter.post("/", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         if (!collections.klubber || !collections.profiler) {
@@ -63,7 +63,7 @@ klubberRouter.post("/", async (req: express.Request, res: express.Response): Pro
         const klubber = await collections.klubber.find({}).toArray();
         res.status(200).json(klubber);
     } catch (error: any) {
-        console.error("❌ Feil ved oppretting av klubb:", error.message);
+        console.error("Feil ved oppretting av klubb:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -72,7 +72,7 @@ klubberRouter.post("/", async (req: express.Request, res: express.Response): Pro
 klubberRouter.post("/folg", async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         const { brukerId, klubbId } = req.body;
-        console.log("📥 Følg forespørsel mottatt:", { brukerId, klubbId });
+        console.log("Følg forespørsel mottatt:", { brukerId, klubbId });
 
         if (!brukerId || !klubbId) {
             res.status(400).send("Mangler brukerId eller klubbId");
@@ -119,10 +119,10 @@ klubberRouter.post("/folg", async (req: express.Request, res: express.Response):
             return;
         }
 
-        console.log(`✅ ${brukerId} følger nå ${klubbId}`);
-        res.status(200).send("✅ Nå følger du klubben");
+        console.log(`${brukerId} følger nå ${klubbId}`);
+        res.status(200).send("Nå følger du klubben");
     } catch (error: any) {
-        console.error("❌ Feil i /folg:", error.message);
+        console.error("Feil i /folg:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -156,12 +156,12 @@ klubberRouter.post("/sluttfolg", async (req: express.Request, res: express.Respo
         const følgere = Array.isArray(klubb?.følgere) ? klubb.følgere : [];
         if (følgere.length === 0) {
             const slettRes = await collections.klubber?.deleteOne({ _id: klubbObjectId });
-            console.log("🗑️ Klubb slettet? =>", slettRes?.deletedCount === 1);
+            console.log("🗑Klubb slettet? =>", slettRes?.deletedCount === 1);
         }
 
-        res.status(200).send("🚫 Du følger ikke lenger klubben");
+        res.status(200).send("Du følger ikke lenger klubben");
     } catch (error: any) {
-        console.error("❌ Feil i /sluttfolg:", error.message);
+        console.error("Feil i /sluttfolg:", error.message);
         res.status(500).json({ error: error.message });
     }
 });

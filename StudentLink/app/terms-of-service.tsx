@@ -68,7 +68,7 @@ export default function TermsOfService() {
                 <Text style={styles.text}>
                     10. Kontakt oss.{"\n"}
                     Har du spørsmål? .{"\n"}
-                    Ta kontakt på: studentlink@gmail.com.
+                    Ta kontakt på: studentlinkautomail@gmail.com.
                 </Text>
 
                 <TouchableOpacity style={styles.button} onPress={() => router.back()}>

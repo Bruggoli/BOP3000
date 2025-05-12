@@ -24,7 +24,7 @@ postRouter.post("/", async (req: express.Request, res: express.Response): Promis
         const result = await collections.poster.insertOne(nyttPost);
         res.status(201).json({ message: "Post opprettet", id: result.insertedId });
     } catch (error: any) {
-        console.error("❌ Feil ved oppretting av post:", error.message);
+        console.error("Feil ved oppretting av post:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -99,7 +99,7 @@ postRouter.patch("/:id/like", async (req: express.Request, res: express.Response
 
         res.status(200).json({ message: harLikt ? "Unliket" : "Liket" });
     } catch (error: any) {
-        console.error("❌ Feil ved like/unlike:", error.message);
+        console.error("Feil ved like/unlike:", error.message);
         res.status(500).json({ error: error.message });
     }
 });

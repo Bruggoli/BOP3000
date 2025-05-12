@@ -77,7 +77,7 @@ kommentarRouter.patch("/:id/like", async (req: express.Request, res: express.Res
 
         res.status(200).json({ message: harLikt ? "Unliket" : "Liket" });
     } catch (error: any) {
-        console.error("❌ Feil ved like/unlike kommentar:", error.message);
+        console.error("Feil ved like/unlike kommentar:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
