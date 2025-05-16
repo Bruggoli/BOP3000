@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ReportModal from '@/components/Posts/ReportModal';
+import CustomAlert from '@/components/CustomAlert';
 
 const avatarMap: Record<string, any> = {
     'avatar1.png': require('../../assets/avatars/avatar1.png'),
@@ -41,6 +44,7 @@ type Props = {
 
 export default function PostCard({
                                      postId,
+                                     userId,
                                      username,
                                      userAvatar,
                                      title,
@@ -57,6 +61,16 @@ export default function PostCard({
     const [localLikes, setLocalLikes] = useState<string[]>(likes);
     const hasLiked = localLikes.includes(currentUserId);
     const router = useRouter();
+    const [modalVisible, setModalVisible] = useState(false);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
 
     const handleLike = async () => {
         try {
@@ -72,7 +86,35 @@ export default function PostCard({
                     : [...prevLikes, currentUserId]
             );
         } catch (err) {
-            console.error("Kunne ikke like/unlike posten:", err);
+            showAlert("Feil", "Kunne ikke like/unlike posten.");
+        }
+    };
+
+    const sendReport = async (reason: string) => {
+        try {
+            const userEmail = await AsyncStorage.getItem('userEmail');
+            const response = await fetch("http://10.0.2.2:3000/report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    postId,
+                    reportedBy: currentUserId,
+                    reason,
+                    postTitle: title,
+                    postText: text,
+                    reporterEmail: userEmail
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert("Takk!", "Rapporten er sendt.");
+            } else {
+                showAlert("Feil", result?.error || "Kunne ikke sende rapport.");
+            }
+        } catch (error) {
+            showAlert("Feil", "Kunne ikke sende rapport.");
         }
     };
 
@@ -80,7 +122,9 @@ export default function PostCard({
         <View style={[styles.card, { backgroundColor: color }]}>
             <View style={styles.headerRow}>
                 <View style={styles.userRow}>
-                    <Image source={avatarSource} style={styles.avatar} />
+                    <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]' as const, params: { id: userId } })}>
+                        <Image source={avatarSource} style={styles.avatar} />
+                    </TouchableOpacity>
                     <Text style={styles.username}>{username}</Text>
                 </View>
                 <Text style={styles.timestamp}>{timestamp}</Text>
@@ -88,8 +132,8 @@ export default function PostCard({
 
             <View style={styles.titleRow}>
                 <Text style={styles.title}>{title}</Text>
-                <TouchableOpacity>
-                    <FontAwesome name="flag" size={18} color="black" />
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <FontAwesome name="flag" size={18} color="white" />
                 </TouchableOpacity>
             </View>
 
@@ -108,7 +152,7 @@ export default function PostCard({
                     onPress={() =>
                         router.push({
                             pathname: '/comments/[postId]',
-                            params: { postId, color }, // ✅ sender fargen med
+                            params: { postId, color },
                         })
                     }
                 >
@@ -118,6 +162,19 @@ export default function PostCard({
 
                 <Text style={styles.clubText}>{clubName} • {location}</Text>
             </View>
+
+            <ReportModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                onSubmit={(reason) => sendReport(reason)}
+            />
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+            />
         </View>
     );
 }

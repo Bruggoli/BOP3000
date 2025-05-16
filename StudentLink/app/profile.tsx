@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, Image, FlatList, StyleSheet, TouchableOpacity,
-    Modal, ScrollView, Alert
+    Modal, ScrollView, TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,12 +37,14 @@ export default function Profile() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
-    const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
+    const server = process.env.EXPO_PUBLIC_LOCALHOST;
     const [activeTab, setActiveTab] = useState<'posts' | 'clubs'>('posts');
     const [followedClubs, setFollowedClubs] = useState<any[]>([]);
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
+    const [editingBio, setEditingBio] = useState(false);
+    const [newBio, setNewBio] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -86,6 +88,7 @@ export default function Profile() {
             );
             setFollowedClubs(brukerensKlubber);
             setProfile(profileData);
+            setNewBio(profileData.bio || '');
 
             const klubbMap: Record<string, any> = {};
             allClubs.forEach((klubb: any) => {
@@ -111,7 +114,7 @@ export default function Profile() {
                             text: post.innhold,
                             location: post.location || "Campus Bø",
                             clubName: klubb?.navn || "New Feed",
-                            color: klubb?.farge || "#607D8B",
+                            color: klubb?.farge || "#FF8A65",
                             likes: Array.isArray(post.likes) ? post.likes : [],
                             comments: commentList.length,
                             timestamp: createdAt.toLocaleString('no-NO', {
@@ -135,9 +138,43 @@ export default function Profile() {
         }
     };
 
+    const handleBioSave = async () => {
+        const trimmedBio = newBio.trim();
+
+        if (trimmedBio === profile?.bio?.trim()) {
+            setEditingBio(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${server}/profil/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bio: trimmedBio }),
+            });
+
+            if (res.ok) {
+                setProfile((prev: any) => ({ ...prev, bio: trimmedBio }));
+                showAlert("Bio oppdatert", "Din bio ble lagret.");
+            } else {
+                const data = await res.json();
+                showAlert("Feil", data?.error || "Kunne ikke lagre bio");
+            }
+        } catch (err) {
+            console.error("Kunne ikke lagre bio:", err);
+            showAlert("Nettverksfeil", "Klarte ikke å koble til serveren");
+        } finally {
+            setEditingBio(false);
+        }
+    };
+
     const avatarSource = avatarMap[profile?.icon] || avatarMap['avatar1.png'];
 
     const handleAvatarChange = async (newIcon: string) => {
+        if (newIcon === profile?.icon) {
+            setModalVisible(false);
+            return;
+        }
         try {
             const res = await fetch(`${server}/profil/${userId}`, {
                 method: 'PATCH',
@@ -162,12 +199,40 @@ export default function Profile() {
     return (
         <SafeAreaView style={styles.container}>
             <Navbar location="Profil" toggleTheme={() => {}} />
-
             <View style={styles.profileHeader}>
                 <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <Image source={avatarSource} style={styles.avatar} />
                 </TouchableOpacity>
                 <Text style={styles.username}>{profile?.brukernavn || 'Ukjent'}</Text>
+
+                <TouchableOpacity onPress={() => setEditingBio(true)} disabled={editingBio}>
+                    {editingBio ? (
+                        <View style={styles.bioEditRow}>
+                            <TextInput
+                                style={styles.bioInputInline}
+                                placeholder="Skriv bio (maks 150 tegn)"
+                                placeholderTextColor="#aaa"
+                                value={newBio}
+                                onChangeText={(text) => {
+                                    if (text.length <= 150) setNewBio(text);
+                                }}
+                                multiline
+                                numberOfLines={3}
+                                textAlignVertical="top"
+                                autoFocus
+                            />
+                            <TouchableOpacity style={styles.saveIconButton} onPress={handleBioSave}>
+                                <Text style={styles.saveIconText}>✔</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity onPress={() => setEditingBio(true)}>
+                            <Text style={styles.bio}>
+                                {profile?.bio ? profile.bio : 'Trykk for å legge til bio'}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </TouchableOpacity>
 
                 <View style={styles.tabButtons}>
                     <TouchableOpacity
@@ -245,11 +310,27 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#121212', padding: 20 },
     profileHeader: { alignItems: 'center', marginBottom: 15, marginTop: 12 },
     avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
-    username: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+    username: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+    bio: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 12 },
+    bioInput: {
+        color: 'white',
+        fontSize: 14,
+        backgroundColor: '#1f1f1f',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        textAlign: 'center',
+        width: '100%',
+        maxWidth: 280,
+        marginBottom: 12,
+    },
     tabButtons: { flexDirection: 'row', justifyContent: 'center', marginBottom: 12 },
     tabButton: {
-        backgroundColor: '#333', paddingVertical: 8,
-        paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
+        backgroundColor: '#333',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        marginHorizontal: 4,
+        borderRadius: 20,
     },
     activeTab: { backgroundColor: '#4CAF50' },
     tabText: { color: 'white', fontWeight: 'bold' },
@@ -259,19 +340,59 @@ const styles = StyleSheet.create({
     clubName: { color: 'white', fontWeight: 'bold', fontSize: 16 },
     clubDesc: { color: 'white', marginTop: 4 },
     exploreButton: {
-        backgroundColor: '#4CAF50', marginTop: 20,
-        padding: 12, borderRadius: 8, alignItems: 'center',
+        backgroundColor: '#4CAF50',
+        marginTop: 20,
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
     },
     exploreText: { color: 'white', fontWeight: 'bold' },
     avatarPicker: {
-        flexDirection: 'row', flexWrap: 'wrap',
-        justifyContent: 'center', padding: 10,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        padding: 10,
     },
     avatarOption: {
-        width: 50, height: 50, borderRadius: 25,
-        margin: 5, borderWidth: 2, borderColor: 'transparent',
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        margin: 5,
+        borderWidth: 2,
+        borderColor: 'transparent',
     },
     selectedAvatar: { borderColor: 'white' },
     modalContainer: { flex: 1, backgroundColor: '#121212', paddingTop: 30 },
     modalTitle: { color: 'white', fontSize: 18, textAlign: 'center', marginBottom: 10 },
+    bioEditRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+        gap: 8,
+    },
+    bioInputInline: {
+        backgroundColor: '#1f1f1f',
+        color: 'white',
+        fontSize: 14,
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        minHeight: 60,
+        maxHeight: 100,
+        width: '80%',
+        textAlignVertical: 'top',
+    },
+    saveIconButton: {
+        backgroundColor: '#4CAF50',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    saveIconText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
 });
+

@@ -16,6 +16,7 @@ import Navbar from '@/components/Navigation/Navbar';
 import PostCard from '@/components/Posts/PostCard';
 import { ASIsWithinCampus } from "@/hooks/useLocation";
 import BottomMenu from '@/components/Navigation/BottomMenu';
+import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import CustomAlert from '@/components/CustomAlert';
 
@@ -23,6 +24,9 @@ export default function HomeScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [userId, setUserId] = useState('');
     const [profiles, setProfiles] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const router = useRouter();
     const server: string | undefined = process.env.EXPO_PUBLIC_LOCALHOST;
     const [location, setLocation] = useState<string>('ukjent');
     const [refreshing, setRefreshing] = useState(false);
@@ -35,29 +39,38 @@ export default function HomeScreen() {
     const [alertTitle, setAlertTitle] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
 
-    useEffect(() => {
-        loadData();
-    }, [activeFilter]);
-
     const showAlert = (title: string, message: string) => {
         setAlertTitle(title);
         setAlertMessage(message);
         setAlertVisible(true);
     };
 
+    useEffect(() => {
+        const init = async () => {
+            const storedUserId = await AsyncStorage.getItem('userId');
+            if (storedUserId) {
+                setUserId(storedUserId);
+                await loadData(storedUserId);
+            }
+            setIsLoading(false);
+        };
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (userId) {
+            loadData(userId);
+        }
+    }, [activeFilter]);
+
     const handleRefresh = async () => {
         setRefreshing(true);
-        await loadData();
+        await loadData(userId);
         setRefreshing(false);
     };
 
-    const loadData = async () => {
-        //TODO: denne burde kun godta en user-id
-        // hvis den ikke finner noe må den sende deg til login-siden
-        const storedUserId = await AsyncStorage.getItem('userId');
+    const loadData = async (userIdFromStorage: string) => {
         setLocation(await ASIsWithinCampus() ? "Campus Bø": "Ikke Campus Bø");
-        setUserId(storedUserId || '');
-
         try {
             const [postRes, profileRes, klubbRes] = await Promise.all([
                 fetch(server + '/post'),
@@ -82,7 +95,7 @@ export default function HomeScreen() {
                 klubbMap[k._id] = k;
             });
 
-            const profile = profileList.find((p: any) => p._id === storedUserId);
+            const profile = profileList.find((p: any) => p._id === userIdFromStorage);
             setCurrentProfile(profile);
             const følgerKlubber = profile?.følgerKlubber?.map((id: any) => id.toString()) || [];
 
@@ -111,7 +124,7 @@ export default function HomeScreen() {
                         text: post.innhold,
                         location: post.location || 'Campus Bø',
                         clubName: klubb?.navn || 'New Feed',
-                        color: klubb?.farge || '#607D8B',
+                        color: klubb?.farge || '#FF8A65',
                         likes: Array.isArray(post.likes) ? post.likes : [],
                         comments: commentList.length,
                         timestamp: new Date(post.opprettet).toLocaleString('no-NO', {
@@ -132,8 +145,13 @@ export default function HomeScreen() {
             setPosts(sorted);
         } catch (err) {
             console.error('Feil ved lasting av innlegg:', err);
+            showAlert('Feil', 'Kunne ikke laste innlegg. Prøv igjen senere.');
         }
     };
+
+    if (isLoading) {
+        return null;
+    }
 
     return (
         <SafeAreaView style={styles.container}>

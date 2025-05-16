@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const mongoURI = process.env.MONGO_URI || "mongodb+srv://dbAdmin:12345@cluster0.1e71y.mongodb.net/";
+const mongoURI: string = process.env.MONGO_URI | "";
 const client = new MongoClient(mongoURI);
 
 export const collections: { klubber?: Collection; profiler?: Collection; poster?: Collection; kommentar?: Collection; reports?: Collection } = {};
