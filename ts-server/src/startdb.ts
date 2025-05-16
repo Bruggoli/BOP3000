@@ -109,5 +109,4 @@ For å stenge serveren og ctrl + c ikke funker skriv følgende.
 netstat -ano | findstr :3000 (finner hvor port 3000)
 taskkill /PID <PID> /F (slkriv det siste 5 tallene som kommer opp når du skrivver kommandoen over.
 fjern "<>")
-
- */
+*/
